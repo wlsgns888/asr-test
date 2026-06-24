@@ -166,6 +166,13 @@ Common checks:
 
 ## Scope
 
-No UI is shipped in this first version. Speaker diarization, word-level
-timestamps, docx/PDF export, login, and template management UI remain out of
-scope.
+A browser UI is served from `/` by the FastAPI app. It supports audio upload,
+transcription, minutes generation, result lookup, and displays the current
+speaker-separation capability status.
+
+Speaker diarization is not implemented in the current Qwen3-ASR MLX pipeline.
+The worker returns transcript text and text segments only, without speaker
+labels or speaker-timestamp alignment. Speaker separation is technically
+possible as a future extension by adding a separate diarization backend and
+aligning its speaker turns with ASR transcript segments. Word-level timestamps,
+docx/PDF export, login, and template management UI remain out of scope.

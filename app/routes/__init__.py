@@ -1,3 +1,3 @@
-from app.routes import minutes, transcribe, upload
+from app.routes import capabilities, frontend, minutes, transcribe, upload
 
-__all__ = ["minutes", "transcribe", "upload"]
+__all__ = ["capabilities", "frontend", "minutes", "transcribe", "upload"]

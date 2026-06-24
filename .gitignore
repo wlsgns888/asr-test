@@ -8,6 +8,8 @@ __pycache__/
 .omo/
 .omo/evidence/
 .asr-smoke/
+simple_test/
+test-data/
 data/uploads/
 data/wav/
 data/transcripts/

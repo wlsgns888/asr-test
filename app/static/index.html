@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>회의록 워크벤치</title>
+    <link rel="stylesheet" href="/static/base.css" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/responsive.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="masthead" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Meeting Minutes ASR</p>
+          <h1 id="page-title">회의록 워크벤치</h1>
+        </div>
+        <div class="capability" aria-live="polite">
+          <span class="capability-label">발화자 구분</span>
+          <strong id="speaker-status">확인 중</strong>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <form class="panel workflow" id="minutes-form">
+          <div class="panel-heading">
+            <h2>음성 처리</h2>
+            <span id="run-state">대기</span>
+          </div>
+
+          <label class="field">
+            <span>음성 파일</span>
+            <input
+              id="audio-file"
+              name="file"
+              type="file"
+              accept=".m4a,.mp3,.wav,audio/*"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>회의록 템플릿</span>
+            <textarea id="template" rows="5">- 회의 개요
+- 핵심 논의
+- 결정사항
+- 액션아이템</textarea>
+          </label>
+
+          <button class="primary-action" id="run-button" type="submit">
+            회의록 생성
+          </button>
+
+          <div class="steps" aria-label="처리 단계">
+            <div class="step" data-step="upload">
+              <span>1</span>
+              <strong>업로드</strong>
+            </div>
+            <div class="step" data-step="transcript">
+              <span>2</span>
+              <strong>전사</strong>
+            </div>
+            <div class="step" data-step="minutes">
+              <span>3</span>
+              <strong>회의록</strong>
+            </div>
+            <div class="step" data-step="result">
+              <span>4</span>
+              <strong>저장</strong>
+            </div>
+          </div>
+        </form>
+
+        <section class="panel result-panel" aria-labelledby="result-title">
+          <div class="panel-heading">
+            <h2 id="result-title">결과</h2>
+            <button class="secondary-action" id="copy-button" type="button" disabled>
+              복사
+            </button>
+          </div>
+          <div class="result-meta" id="result-meta">아직 생성된 회의록이 없습니다.</div>
+          <pre id="result-output" tabindex="0"></pre>
+        </section>
+      </section>
+
+      <section class="notice" id="speaker-note">
+        발화자 구분 상태를 불러오는 중입니다.
+      </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
