@@ -1,0 +1,16 @@
+.env
+zai_api.md
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.basedpyright/
+.omo/
+.omo/evidence/
+.asr-smoke/
+data/uploads/
+data/wav/
+data/transcripts/
+data/minutes/
+data/
+*.pyc

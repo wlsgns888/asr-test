@@ -1,0 +1,89 @@
+[project]
+name = "meeting-minutes-asr"
+version = "0.1.0"
+description = "Local FastAPI app for ASR transcription and meeting minutes generation."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "mlx-audio>=0.4.4",
+    "openai>=1.90.0",
+    "orjson>=3.10.0",
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.9.0",
+    "python-multipart>=0.0.20",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.29.0",
+    "httpx>=0.28.0",
+    "httpx2>=0.28.0",
+    "pytest>=8.3.0",
+    "ruff>=0.11.0",
+]
+
+[tool.basedpyright]
+typeCheckingMode = "all"
+pythonVersion = "3.12"
+pythonPlatform = "All"
+include = ["app", "scripts", "tests"]
+exclude = ["**/__pycache__", "**/.venv", "**/build", "**/dist", "data"]
+reportUnusedCallResult = "warning"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnusedVariable = "error"
+reportMissingParameterType = "error"
+reportPrivateUsage = "error"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["app", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "ISC001",
+    "CPY001",
+    "D",
+    "D203",
+    "D213",
+    "FBT001",
+    "FBT002",
+    "FIX002",
+    "TD002",
+    "TD003",
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "PLR2004", "S101"]
+"scripts/**/*.py" = ["E402", "INP001", "T201"]
+"app/workers/**/*.py" = ["S603", "T201"]
+"app/services/audio_service.py" = ["S603"]
+"app/services/asr_service.py" = ["S603"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Query",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
