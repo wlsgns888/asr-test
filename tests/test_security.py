@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from app.artifact_id import InvalidArtifactIdError
-from app.config import AppEnv, LLMProvider, Settings
+from app.config import AppEnv, DiarizationEngine, LLMProvider, Settings
 from app.schemas import UploadSummary
 from app.services.storage_service import ArtifactNotFoundError, StorageService
 from fastapi.testclient import TestClient
@@ -33,9 +33,25 @@ def test_fake_adapters_are_rejected_outside_testing() -> None:
             app_env=AppEnv.PRODUCTION,
             asr_engine="fake",
             llm_provider=LLMProvider.FAKE,
+            diarization_engine=DiarizationEngine.FAKE,
             llm_api_key=SecretStr("test-key"),
             llm_model="fake",
         )
+
+
+def test_diarization_hf_token_is_not_serialized() -> None:
+    settings = Settings(
+        app_env=AppEnv.TESTING,
+        asr_engine="fake",
+        llm_provider=LLMProvider.FAKE,
+        diarization_engine=DiarizationEngine.PYANNOTE,
+        diarization_hf_token=SecretStr("hf_test_secret"),
+        llm_api_key=SecretStr("test-key"),
+        llm_model="fake",
+    )
+
+    assert "hf_test_secret" not in repr(settings)
+    assert "hf_test_secret" not in settings.model_dump_json()
 
 
 def test_artifact_ids_reject_path_traversal(settings: Settings) -> None:

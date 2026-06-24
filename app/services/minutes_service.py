@@ -12,5 +12,6 @@ class MinutesService:
 
     def create_minutes(self, transcript_id: str, template: str) -> MinutesSummary:
         transcript = self.storage.load_transcript(transcript_id)
-        markdown = self.llm.generate_minutes(transcript.text, template)
+        source_text = transcript.speaker_transcript or transcript.text
+        markdown = self.llm.generate_minutes(source_text, template)
         return self.storage.save_minutes(transcript_id, markdown)

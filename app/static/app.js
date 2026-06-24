@@ -62,10 +62,10 @@ async function loadCapabilities() {
   try {
     const data = await requestJson("/capabilities");
     const speaker = data.speaker_separation;
-    speakerStatus.textContent = speaker.available ? "지원" : "현재 미지원";
+    speakerStatus.textContent = speaker.available ? "지원" : "설정 필요";
     speakerNote.textContent = speaker.available
-      ? "발화자 구분을 사용할 수 있습니다."
-      : "현재 Qwen3-ASR MLX 워커는 화자 라벨이나 화자별 시간 정렬을 반환하지 않습니다. 별도 diarization 백엔드와 전사 정렬을 추가하면 기술적으로 구현 가능합니다.";
+      ? `${speaker.engine} 엔진으로 발화자 구분을 사용할 수 있습니다.`
+      : "발화자 구분 코드는 적용되어 있으며, pyannote 모델 사용을 위해 Hugging Face 토큰과 모델 조건 수락이 필요합니다.";
     speakerNote.classList.toggle("is-warning", !speaker.available);
   } catch (error) {
     speakerStatus.textContent = "확인 실패";
@@ -108,8 +108,11 @@ async function fetchResult(minutesId) {
 
 function renderResult(result, transcript) {
   resultMeta.textContent = `회의록 ID ${result.minutes_id} · 전사 ID ${transcript.transcript_id}`;
-  sourceMeta.textContent = transcript.language || "원본";
-  sourceOutput.textContent = transcript.text || "(전사 원본 없음)";
+  sourceMeta.textContent = transcript.speaker_transcript
+    ? `${transcript.language || "원본"} · 화자 구분`
+    : transcript.language || "원본";
+  sourceOutput.textContent =
+    transcript.speaker_transcript || transcript.text || "(전사 원본 없음)";
   minutesMeta.textContent = "Markdown";
   resultOutput.textContent = result.markdown;
   currentMarkdown = result.markdown;

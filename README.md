@@ -36,6 +36,7 @@ For local smoke tests without external AI calls:
 ```env
 APP_ENV=testing
 ASR_ENGINE=fake
+DIARIZATION_ENGINE=fake
 LLM_PROVIDER=fake
 ```
 
@@ -164,15 +165,74 @@ Common checks:
 - Non-Apple Silicon machines: use `ASR_ENGINE=fake` only with
   `APP_ENV=testing`, or replace the worker with a compatible ASR backend.
 
+## Speaker Diarization
+
+Speaker separation is implemented as an optional post-ASR step. The selected
+default backend is `pyannote/speaker-diarization-community-1` because it is a
+local open-source diarization pipeline, improves on pyannote 3.1, and publishes
+meeting-style multilingual benchmark results including AISHELL-4 and
+AliMeeting. The app aligns pyannote speaker turns with Qwen3-ASR timestamped
+segments and stores both `speaker_segments` and `speaker_transcript`.
+
+Configure real diarization:
+
+```env
+DIARIZATION_ENGINE=pyannote
+DIARIZATION_MODEL=pyannote/speaker-diarization-community-1
+DIARIZATION_HF_TOKEN=<hugging-face-token>
+```
+
+Before the first run, accept the model terms on Hugging Face for
+`pyannote/speaker-diarization-community-1`, create a token with model download
+access, and install `pyannote.audio` in a Python version supported by pyannote:
+
+```bash
+uv add pyannote.audio
+```
+
+The token is passed to the worker through `PYANNOTE_AUTH_TOKEN` and is not sent
+as a command-line argument. If `DIARIZATION_ENGINE=pyannote` is set without a
+token, `/transcripts` returns `503 Diarization is not configured`.
+
+For CI or local contract tests only:
+
+```env
+APP_ENV=testing
+DIARIZATION_ENGINE=fake
+```
+
+Fake diarization alternates deterministic `SPEAKER_00` and `SPEAKER_01` labels
+and is rejected outside `APP_ENV=testing`.
+
+Current local verification note: this repository environment does not have a
+Hugging Face token configured, so the pyannote model cannot be downloaded here
+until `DIARIZATION_HF_TOKEN` is provided and the model terms are accepted.
+
+### About `pyannote/speaker-diarization-3.1`
+
+The app can be pointed at 3.1 by changing only the model value:
+
+```env
+DIARIZATION_ENGINE=pyannote
+DIARIZATION_MODEL=pyannote/speaker-diarization-3.1
+DIARIZATION_HF_TOKEN=<hugging-face-token>
+```
+
+`speaker-diarization-3.1` is still usable, but it is a legacy pyannote pipeline.
+It requires accepting both `pyannote/speaker-diarization-3.1` and the internal
+`pyannote/segmentation-3.0` model conditions on Hugging Face. In this local
+review, the supplied token could download the 3.1 pipeline config, but
+`pyannote/segmentation-3.0` returned HTTP 403, so a full 3.1 run is blocked
+until that second model access is accepted for the token.
+
+For Korean meeting-style audio, `speaker-diarization-community-1` remains the
+recommended default because its official benchmark table reports better DER
+than 3.1 on AISHELL-4 and AliMeeting and it provides exclusive diarization for
+cleaner transcript timestamp reconciliation.
+
 ## Scope
 
 A browser UI is served from `/` by the FastAPI app. It supports audio upload,
-transcription, minutes generation, result lookup, and displays the current
-speaker-separation capability status.
-
-Speaker diarization is not implemented in the current Qwen3-ASR MLX pipeline.
-The worker returns transcript text and text segments only, without speaker
-labels or speaker-timestamp alignment. Speaker separation is technically
-possible as a future extension by adding a separate diarization backend and
-aligning its speaker turns with ASR transcript segments. Word-level timestamps,
+transcription, speaker-labeled source display when configured, minutes
+generation, result lookup, and Markdown download. Word-level timestamps,
 docx/PDF export, login, and template management UI remain out of scope.

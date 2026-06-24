@@ -36,6 +36,24 @@ class TranscriptCreateRequest(BaseModel):
             ) from error
 
 
+class TimedTranscriptSegment(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    text: str
+    start: float | None = None
+    end: float | None = None
+    duration: float | None = None
+
+
+class SpeakerSegment(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    speaker: str
+    start: float
+    end: float
+    text: str = ""
+
+
 class TranscriptDocument(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
@@ -43,6 +61,9 @@ class TranscriptDocument(BaseModel):
     language: str
     text: str
     segments: list[str]
+    timed_segments: list[TimedTranscriptSegment] = []
+    speaker_segments: list[SpeakerSegment] = []
+    speaker_transcript: str = ""
 
 
 class TranscriptSummary(BaseModel):
@@ -53,4 +74,6 @@ class TranscriptSummary(BaseModel):
     model: str
     language: str
     text: str
+    speaker_transcript: str = ""
+    speaker_segments: list[SpeakerSegment] = []
     path: Path

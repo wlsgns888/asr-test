@@ -5,6 +5,8 @@ from app.schemas.minutes import (
     MinutesSummary,
 )
 from app.schemas.transcript import (
+    SpeakerSegment,
+    TimedTranscriptSegment,
     TranscriptCreateRequest,
     TranscriptDocument,
     TranscriptSummary,
@@ -16,6 +18,8 @@ __all__ = [
     "MinutesCreateRequest",
     "MinutesResult",
     "MinutesSummary",
+    "SpeakerSegment",
+    "TimedTranscriptSegment",
     "TranscriptCreateRequest",
     "TranscriptDocument",
     "TranscriptSummary",

@@ -1,6 +1,9 @@
 import wave
 from io import BytesIO
+from pathlib import Path
 
+from app.config import AppEnv, DiarizationEngine, LLMProvider, Settings
+from app.main import create_app
 from app.schemas import (
     MinutesArtifact,
     MinutesResult,
@@ -9,6 +12,7 @@ from app.schemas import (
     UploadSummary,
 )
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
 
 def make_wav_bytes() -> bytes:
@@ -38,6 +42,8 @@ def test_pipeline_creates_transcript_and_minutes_when_fake_adapters_enabled(
     assert transcript_response.status_code == 201
     transcript = TranscriptSummary.model_validate_json(transcript_response.text)
     transcript_id = transcript.transcript_id
+    assert transcript.speaker_transcript.startswith("[SPEAKER_00]")
+    assert transcript.speaker_segments[0].speaker == "SPEAKER_00"
 
     minutes_response = client.post(
         "/minutes",
@@ -56,6 +62,7 @@ def test_pipeline_creates_transcript_and_minutes_when_fake_adapters_enabled(
     result = MinutesResult.model_validate_json(result_response.text)
     assert result.minutes_id == minutes_id
     assert result.markdown.startswith("# 회의록")
+    assert "SPEAKER_00" in result.markdown
     assert result.result_json["transcript_id"] == transcript_id
     assert result.markdown_path.exists()
     assert result.json_path.exists()
@@ -72,6 +79,35 @@ def test_upload_rejects_unsupported_file_types(client: TestClient) -> None:
     # Then: the API rejects it before storage.
     assert response.status_code == 400
     assert response.json()["detail"] == "Unsupported audio extension"
+
+
+def test_pyannote_diarization_without_token_returns_stable_503(
+    tmp_path: Path,
+) -> None:
+    settings = Settings(
+        app_env=AppEnv.TESTING,
+        asr_engine="fake",
+        diarization_engine=DiarizationEngine.PYANNOTE,
+        llm_provider=LLMProvider.FAKE,
+        llm_api_key=SecretStr("test-key"),
+        llm_model="fake-minutes",
+        data_dir=tmp_path,
+        upload_dir=tmp_path / "uploads",
+        wav_dir=tmp_path / "wav",
+        transcript_dir=tmp_path / "transcripts",
+        minutes_dir=tmp_path / "minutes",
+    )
+    local_client = TestClient(create_app(settings))
+    upload_response = local_client.post(
+        "/uploads",
+        files={"file": ("standup.wav", make_wav_bytes(), "audio/wav")},
+    )
+    upload = UploadSummary.model_validate_json(upload_response.text)
+
+    response = local_client.post("/transcripts", json={"upload_id": upload.upload_id})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Diarization is not configured"
 
 
 def test_saved_artifacts_are_json_serializable(client: TestClient) -> None:

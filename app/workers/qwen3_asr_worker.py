@@ -10,6 +10,10 @@ from pydantic import BaseModel, ConfigDict
 
 ARG_COUNT = 7
 MLX_AUDIO_TIMEOUT_SECONDS = 7200
+TranscriptPayload = dict[
+    str,
+    str | list[str] | list[dict[str, float | str | None]],
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,6 +27,9 @@ class QwenSegment(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     text: str
+    start: float | None = None
+    end: float | None = None
+    duration: float | None = None
 
 
 class QwenOutput(BaseModel):
@@ -43,7 +50,7 @@ def parse_args() -> WorkerArgs:
     )
 
 
-def transcribe(args: WorkerArgs) -> dict[str, str | list[str]]:
+def transcribe(args: WorkerArgs) -> TranscriptPayload:
     with tempfile.TemporaryDirectory() as output_dir:
         output_base = Path(output_dir) / "transcript"
         _ = subprocess.run(
@@ -77,6 +84,9 @@ def transcribe(args: WorkerArgs) -> dict[str, str | list[str]]:
         "language": args.language,
         "text": output.text,
         "segments": [segment.text for segment in output.segments],
+        "timed_segments": [
+            segment.model_dump(mode="json") for segment in output.segments
+        ],
     }
 
 

@@ -5,6 +5,7 @@ from fastapi import Depends
 from app.config import Settings
 from app.services.asr_service import ASRService, create_asr_engine
 from app.services.audio_service import AudioService
+from app.services.diarization_service import create_diarization_backend
 from app.services.llm_service import LLMService
 from app.services.minutes_service import MinutesService
 from app.services.storage_service import StorageService
@@ -30,6 +31,7 @@ def get_asr_service(settings: SettingsDep) -> ASRService:
         storage=storage,
         audio=AudioService(settings),
         engine=create_asr_engine(settings),
+        diarization=create_diarization_backend(settings),
     )
 
 

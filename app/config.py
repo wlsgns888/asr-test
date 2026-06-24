@@ -8,6 +8,7 @@ from pydantic_core import PydanticCustomError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ASR_MODEL: Final = "mlx-community/Qwen3-ASR-0.6B-4bit"
+DEFAULT_DIARIZATION_MODEL: Final = "pyannote/speaker-diarization-community-1"
 DEFAULT_LLM_BASE_URL: Final = "https://api.z.ai/api/paas/v4"
 FAKE_ADAPTER_ERROR_CODE: Final = "fake_adapter_environment"
 FAKE_ADAPTER_ERROR_MESSAGE: Final = "fake adapters require APP_ENV=testing"
@@ -37,6 +38,12 @@ class LLMProvider(StrEnum):
     FAKE = "fake"
 
 
+class DiarizationEngine(StrEnum):
+    DISABLED = "disabled"
+    FAKE = "fake"
+    PYANNOTE = "pyannote"
+
+
 class Settings(BaseSettings):
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_file=".env",
@@ -47,6 +54,9 @@ class Settings(BaseSettings):
     asr_engine: str = "qwen3_asr_mlx"
     asr_model: str = DEFAULT_ASR_MODEL
     asr_language: str = "ko"
+    diarization_engine: DiarizationEngine = DiarizationEngine.DISABLED
+    diarization_model: str = DEFAULT_DIARIZATION_MODEL
+    diarization_hf_token: SecretStr = Field(default=SecretStr(""))
     llm_provider: LLMProvider = LLMProvider.ZAI
     llm_base_url: str = DEFAULT_LLM_BASE_URL
     llm_api_key: SecretStr = Field(default=SecretStr(""))
@@ -61,7 +71,11 @@ class Settings(BaseSettings):
     def reject_fake_adapters_outside_testing(self) -> "Settings":
         if self.app_env is AppEnv.TESTING:
             return self
-        if self.asr_engine == "fake" or self.llm_provider is LLMProvider.FAKE:
+        if (
+            self.asr_engine == "fake"
+            or self.llm_provider is LLMProvider.FAKE
+            or self.diarization_engine is DiarizationEngine.FAKE
+        ):
             raise PydanticCustomError(
                 FAKE_ADAPTER_ERROR_CODE,
                 FAKE_ADAPTER_ERROR_MESSAGE,

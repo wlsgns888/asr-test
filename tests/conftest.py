@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from app.config import AppEnv, LLMProvider, Settings
+from app.config import AppEnv, DiarizationEngine, LLMProvider, Settings
 from app.main import create_app
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
@@ -15,6 +15,7 @@ def settings(tmp_path: Path) -> Settings:
         asr_engine="fake",
         asr_model="mlx-community/Qwen3-ASR-0.6B-4bit",
         asr_language="ko",
+        diarization_engine=DiarizationEngine.FAKE,
         llm_provider=LLMProvider.FAKE,
         llm_base_url="https://api.z.ai/api/paas/v4",
         llm_api_key=SecretStr("test-key"),

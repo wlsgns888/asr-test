@@ -60,6 +60,8 @@ class StorageService:
             model=transcript.model,
             language=transcript.language,
             text=transcript.text,
+            speaker_transcript=transcript.speaker_transcript,
+            speaker_segments=transcript.speaker_segments,
             path=path,
         )
 
