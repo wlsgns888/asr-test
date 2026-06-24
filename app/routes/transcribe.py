@@ -3,6 +3,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.main_dependencies import ASRDep
 from app.schemas import TranscriptCreateRequest, TranscriptSummary
+from app.services.alignment_service import AlignmentWorkerError
 from app.services.audio_service import AudioConversionError
 from app.services.diarization_service import (
     DiarizationConfigurationError,
@@ -47,4 +48,9 @@ async def create_transcript(
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Diarization worker failed",
+        ) from error
+    except AlignmentWorkerError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Alignment worker failed",
         ) from error

@@ -1,4 +1,3 @@
-import json
 import subprocess
 import sys
 import tempfile
@@ -6,14 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, TypeAdapter
 
+MLX_ALIGNMENT_TIMEOUT_SECONDS = 7200
 ARG_COUNT = 7
-MLX_AUDIO_TIMEOUT_SECONDS = 7200
-TranscriptPayload = dict[
-    str,
-    str | list[str] | list[dict[str, float | str | None]],
-]
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,9 +16,10 @@ class WorkerArgs:
     audio: Path
     model: str
     language: str
+    text: str
 
 
-class QwenSegment(BaseModel):
+class AlignerSegment(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     text: str
@@ -32,11 +28,11 @@ class QwenSegment(BaseModel):
     duration: float | None = None
 
 
-class QwenOutput(BaseModel):
+class AlignerOutput(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     text: str
-    segments: list[QwenSegment] = []
+    segments: list[AlignerSegment] = []
 
 
 def parse_args() -> WorkerArgs:
@@ -47,12 +43,13 @@ def parse_args() -> WorkerArgs:
         audio=Path(args[2]),
         model=args[4],
         language=args[6],
+        text=sys.stdin.read(),
     )
 
 
-def transcribe(args: WorkerArgs) -> TranscriptPayload:
+def align(args: WorkerArgs) -> list[AlignerSegment]:
     with tempfile.TemporaryDirectory() as output_dir:
-        output_base = Path(output_dir) / "transcript"
+        output_base = Path(output_dir) / "alignment"
         _ = subprocess.run(
             [
                 sys.executable,
@@ -68,31 +65,25 @@ def transcribe(args: WorkerArgs) -> TranscriptPayload:
                 "json",
                 "--language",
                 args.language,
-                "--max-tokens",
-                "2048",
+                "--text",
+                args.text,
             ],
             check=True,
             capture_output=True,
             text=True,
-            timeout=MLX_AUDIO_TIMEOUT_SECONDS,
+            timeout=MLX_ALIGNMENT_TIMEOUT_SECONDS,
         )
-        output = QwenOutput.model_validate_json(
+        output = AlignerOutput.model_validate_json(
             output_base.with_suffix(".json").read_text(encoding="utf-8"),
         )
-    return {
-        "model": args.model,
-        "language": args.language,
-        "text": output.text,
-        "segments": [segment.text for segment in output.segments],
-        "timed_segments": [
-            segment.model_dump(mode="json") for segment in output.segments
-        ],
-    }
+    return output.segments
 
 
 def main() -> None:
-    payload = transcribe(parse_args())
-    print(json.dumps(payload, ensure_ascii=False))
+    payload = TypeAdapter(list[AlignerSegment]).dump_json(
+        align(parse_args()),
+    )
+    print(payload.decode("utf-8"))
 
 
 class WorkerArgumentError(RuntimeError):

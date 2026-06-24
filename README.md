@@ -100,7 +100,9 @@ The default engine launches `app.workers.qwen3_asr_worker` in a subprocess so
 the FastAPI process does not retain the ASR model after each job. Install
 `mlx-audio` in the target Mac environment before running the Qwen3-ASR engine.
 The worker calls `mlx_audio.stt.generate` with
-`mlx-community/Qwen3-ASR-0.6B-4bit`.
+`mlx-community/Qwen3-ASR-0.6B-4bit`. When speaker diarization is enabled, the app
+also runs Qwen3 ForcedAligner to replace coarse ASR timing with word or short
+phrase timestamps before speaker labels are applied.
 
 ### Qwen3-ASR Model Setup
 
@@ -121,6 +123,8 @@ APP_ENV=development
 ASR_ENGINE=qwen3_asr_mlx
 ASR_MODEL=mlx-community/Qwen3-ASR-0.6B-4bit
 ASR_LANGUAGE=ko
+ALIGNMENT_ENGINE=qwen3_forced_mlx
+ALIGNMENT_MODEL=mlx-community/Qwen3-ForcedAligner-0.6B-8bit
 ```
 
 `ASR_MODEL` can be changed to another MLX-compatible Hugging Face ASR model,
@@ -156,6 +160,19 @@ For a full API run, start the server with the same `.env` values and call the
 upload/transcript endpoints. Uploaded audio is always normalized to 16 kHz mono
 WAV with `ffmpeg` before the worker starts.
 
+### Word/Phrase Alignment
+
+`ALIGNMENT_ENGINE=qwen3_forced_mlx` keeps Qwen3-ASR as the transcript source and
+uses `mlx-community/Qwen3-ForcedAligner-0.6B-8bit` only to create finer
+timestamps for the recognized text. This is the recommended mode for meeting
+audio because pyannote speaker turns can then be reconciled against short text
+spans instead of one long ASR segment.
+
+The aligner runs only when diarization returns speaker turns. If the aligner is
+disabled, the app still has a deterministic coarse fallback that splits a long
+ASR segment across overlapping speaker turns, but ForcedAligner produces better
+speaker boundaries for real meetings.
+
 Common checks:
 
 - `ModuleNotFoundError: mlx_audio`: run `uv sync` and confirm `mlx-audio` is in
@@ -171,8 +188,8 @@ Speaker separation is implemented as an optional post-ASR step. The selected
 default backend is `pyannote/speaker-diarization-community-1` because it is a
 local open-source diarization pipeline, improves on pyannote 3.1, and publishes
 meeting-style multilingual benchmark results including AISHELL-4 and
-AliMeeting. The app aligns pyannote speaker turns with Qwen3-ASR timestamped
-segments and stores both `speaker_segments` and `speaker_transcript`.
+AliMeeting. The app aligns pyannote speaker turns with Qwen3 ForcedAligner
+timestamps and stores both `speaker_segments` and `speaker_transcript`.
 
 Configure real diarization:
 
@@ -204,9 +221,9 @@ DIARIZATION_ENGINE=fake
 Fake diarization alternates deterministic `SPEAKER_00` and `SPEAKER_01` labels
 and is rejected outside `APP_ENV=testing`.
 
-Current local verification note: this repository environment does not have a
-Hugging Face token configured, so the pyannote model cannot be downloaded here
-until `DIARIZATION_HF_TOKEN` is provided and the model terms are accepted.
+Current local verification note: real Qwen3-ASR, Qwen3 ForcedAligner, and
+`pyannote/speaker-diarization-community-1` were verified through the HTTP API
+against a five-minute `simple_test` audio chunk.
 
 ### About `pyannote/speaker-diarization-3.1`
 
@@ -234,5 +251,5 @@ cleaner transcript timestamp reconciliation.
 
 A browser UI is served from `/` by the FastAPI app. It supports audio upload,
 transcription, speaker-labeled source display when configured, minutes
-generation, result lookup, and Markdown download. Word-level timestamps,
-docx/PDF export, login, and template management UI remain out of scope.
+generation, result lookup, and Markdown download. docx/PDF export, login, and
+template management UI remain out of scope.

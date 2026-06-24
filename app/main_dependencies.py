@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.config import Settings
+from app.services.alignment_service import create_alignment_backend
 from app.services.asr_service import ASRService, create_asr_engine
 from app.services.audio_service import AudioService
 from app.services.diarization_service import create_diarization_backend
@@ -32,6 +33,7 @@ def get_asr_service(settings: SettingsDep) -> ASRService:
         audio=AudioService(settings),
         engine=create_asr_engine(settings),
         diarization=create_diarization_backend(settings),
+        alignment=create_alignment_backend(settings),
     )
 
 

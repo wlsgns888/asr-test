@@ -10,6 +10,7 @@ from app.schemas.transcript import (
     TranscriptDocument,
     TranscriptSummary,
 )
+from app.services.alignment_service import TranscriptAlignmentBackend
 from app.services.audio_service import AudioService
 from app.services.diarization_service import (
     DiarizationBackend,
@@ -87,12 +88,15 @@ class ASRService:
     audio: AudioService
     engine: ASREngine
     diarization: DiarizationBackend
+    alignment: TranscriptAlignmentBackend
 
     def transcribe_upload(self, upload_id: str) -> TranscriptSummary:
         source = self.storage.find_upload(upload_id)
         wav_path = self.audio.convert_to_wav(source)
         transcript = self.engine.transcribe(wav_path)
         speaker_turns = self.diarization.diarize(wav_path)
+        if len(speaker_turns) > 0:
+            transcript = self.alignment.align(wav_path, transcript)
         transcript = apply_speaker_labels(transcript, speaker_turns)
         return self.storage.save_transcript(upload_id, transcript)
 

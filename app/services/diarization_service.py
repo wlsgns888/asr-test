@@ -106,9 +106,10 @@ def apply_speaker_labels(
             }
         )
 
-    aligned_segments = [
-        _assign_speaker(segment, speaker_turns) for segment in transcript.timed_segments
-    ]
+    aligned_segments = _align_transcript_segments(
+        transcript.timed_segments,
+        speaker_turns,
+    )
     lines = _format_speaker_transcript(aligned_segments)
     return transcript.model_copy(
         update={
@@ -116,6 +117,60 @@ def apply_speaker_labels(
             "speaker_transcript": "\n".join(lines),
         }
     )
+
+
+def _align_transcript_segments(
+    transcript_segments: list[TimedTranscriptSegment],
+    speaker_turns: list[SpeakerSegment],
+) -> list[SpeakerSegment]:
+    aligned_segments: list[SpeakerSegment] = []
+    for segment in transcript_segments:
+        overlaps = _overlapping_turns(segment, speaker_turns)
+        if len(overlaps) <= 1:
+            aligned_segments.append(_assign_speaker(segment, speaker_turns))
+            continue
+        aligned_segments.extend(_split_segment_by_turns(segment, overlaps))
+    return aligned_segments
+
+
+def _overlapping_turns(
+    segment: TimedTranscriptSegment,
+    speaker_turns: list[SpeakerSegment],
+) -> list[SpeakerSegment]:
+    start = segment.start if segment.start is not None else 0.0
+    end = _segment_end(segment)
+    return [turn for turn in speaker_turns if _overlap(start, end, turn) > 0.0]
+
+
+def _split_segment_by_turns(
+    segment: TimedTranscriptSegment,
+    speaker_turns: list[SpeakerSegment],
+) -> list[SpeakerSegment]:
+    start = segment.start if segment.start is not None else 0.0
+    end = _segment_end(segment)
+    tokens = _segment_tokens(segment.text)
+    if end <= start or len(tokens) == 0:
+        return [_assign_speaker(segment, speaker_turns)]
+
+    token_duration = (end - start) / len(tokens)
+    pieces: list[SpeakerSegment] = []
+    for index, token in enumerate(tokens):
+        token_start = start + (token_duration * index)
+        token_end = token_start + token_duration
+        token_segment = TimedTranscriptSegment(
+            text=token,
+            start=token_start,
+            end=token_end,
+        )
+        pieces.append(_assign_speaker(token_segment, speaker_turns))
+    return pieces
+
+
+def _segment_tokens(text: str) -> list[str]:
+    tokens = text.split()
+    if len(tokens) > 0:
+        return tokens
+    return list(text)
 
 
 def _assign_speaker(

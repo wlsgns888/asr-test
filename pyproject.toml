@@ -69,6 +69,7 @@ fixable = ["ALL"]
 "app/workers/**/*.py" = ["S603", "T201"]
 "app/services/audio_service.py" = ["S603"]
 "app/services/asr_service.py" = ["S603"]
+"app/services/alignment_service.py" = ["S603"]
 "app/services/diarization_service.py" = ["S603"]
 "app/workers/pyannote_diarization_worker.py" = ["ANN401", "PLC0415"]
 

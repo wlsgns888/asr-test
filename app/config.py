@@ -8,6 +8,7 @@ from pydantic_core import PydanticCustomError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ASR_MODEL: Final = "mlx-community/Qwen3-ASR-0.6B-4bit"
+DEFAULT_ALIGNMENT_MODEL: Final = "mlx-community/Qwen3-ForcedAligner-0.6B-8bit"
 DEFAULT_DIARIZATION_MODEL: Final = "pyannote/speaker-diarization-community-1"
 DEFAULT_LLM_BASE_URL: Final = "https://api.z.ai/api/paas/v4"
 FAKE_ADAPTER_ERROR_CODE: Final = "fake_adapter_environment"
@@ -44,6 +45,11 @@ class DiarizationEngine(StrEnum):
     PYANNOTE = "pyannote"
 
 
+class AlignmentEngine(StrEnum):
+    DISABLED = "disabled"
+    QWEN3_FORCED_MLX = "qwen3_forced_mlx"
+
+
 class Settings(BaseSettings):
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_file=".env",
@@ -54,6 +60,8 @@ class Settings(BaseSettings):
     asr_engine: str = "qwen3_asr_mlx"
     asr_model: str = DEFAULT_ASR_MODEL
     asr_language: str = "ko"
+    alignment_engine: AlignmentEngine = AlignmentEngine.QWEN3_FORCED_MLX
+    alignment_model: str = DEFAULT_ALIGNMENT_MODEL
     diarization_engine: DiarizationEngine = DiarizationEngine.DISABLED
     diarization_model: str = DEFAULT_DIARIZATION_MODEL
     diarization_hf_token: SecretStr = Field(default=SecretStr(""))
