@@ -45,10 +45,10 @@ def diarize(audio: Path, model: str) -> list[SpeakerSegment]:
     except ModuleNotFoundError as error:
         raise WorkerConfigurationError(MISSING_DEPENDENCY_MESSAGE) from error
 
-    try:
-        pipeline = Pipeline.from_pretrained(model, token=token)
-    except TypeError:
-        pipeline = Pipeline.from_pretrained(model, use_auth_token=token)
+    pipeline = Pipeline.from_pretrained(model, token=token)
+    if pipeline is None:
+        message = "pyannote pipeline could not be loaded"
+        raise WorkerConfigurationError(message)
     output = pipeline(str(audio))
     annotation = getattr(output, "speaker_diarization", output)
     return [
