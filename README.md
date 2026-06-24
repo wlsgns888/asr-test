@@ -187,7 +187,7 @@ Before the first run, accept the model terms on Hugging Face for
 access, and install `pyannote.audio` in a Python version supported by pyannote:
 
 ```bash
-uv add pyannote.audio
+uv sync --extra diarization
 ```
 
 The token is passed to the worker through `PYANNOTE_AUTH_TOKEN` and is not sent
