@@ -101,6 +101,69 @@ the FastAPI process does not retain the ASR model after each job. Install
 The worker calls `mlx_audio.stt.generate` with
 `mlx-community/Qwen3-ASR-0.6B-4bit`.
 
+### Qwen3-ASR Model Setup
+
+The Qwen3-ASR path is designed for Apple Silicon through MLX. It does not use
+the z.ai API key; the ASR model is downloaded from Hugging Face on first run.
+
+Prerequisites:
+
+```bash
+brew install ffmpeg
+uv sync
+```
+
+Configure `.env`:
+
+```env
+APP_ENV=development
+ASR_ENGINE=qwen3_asr_mlx
+ASR_MODEL=mlx-community/Qwen3-ASR-0.6B-4bit
+ASR_LANGUAGE=ko
+```
+
+`ASR_MODEL` can be changed to another MLX-compatible Hugging Face ASR model,
+but the worker expects the `mlx_audio.stt.generate` CLI to support it. The
+default model is public and is cached under the local Hugging Face cache,
+typically `~/.cache/huggingface/hub/`.
+
+Run a model-only smoke test with an existing audio file:
+
+```bash
+APP_ENV=development \
+ASR_ENGINE=qwen3_asr_mlx \
+ASR_MODEL=mlx-community/Qwen3-ASR-0.6B-4bit \
+ASR_LANGUAGE=ko \
+LLM_PROVIDER=zai \
+LLM_API_KEY=dummy \
+LLM_MODEL=dummy \
+uv run scripts/test_asr.py sample.wav
+```
+
+Expected output shape:
+
+```json
+{
+  "model": "mlx-community/Qwen3-ASR-0.6B-4bit",
+  "language": "ko",
+  "text": "...",
+  "segments": ["..."]
+}
+```
+
+For a full API run, start the server with the same `.env` values and call the
+upload/transcript endpoints. Uploaded audio is always normalized to 16 kHz mono
+WAV with `ffmpeg` before the worker starts.
+
+Common checks:
+
+- `ModuleNotFoundError: mlx_audio`: run `uv sync` and confirm `mlx-audio` is in
+  the active environment.
+- `ffmpeg` errors: install `ffmpeg` and confirm `ffmpeg -version` works.
+- First run is slow: the Hugging Face model is being downloaded and cached.
+- Non-Apple Silicon machines: use `ASR_ENGINE=fake` only with
+  `APP_ENV=testing`, or replace the worker with a compatible ASR backend.
+
 ## Scope
 
 No UI is shipped in this first version. Speaker diarization, word-level
