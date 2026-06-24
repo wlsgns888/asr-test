@@ -167,34 +167,6 @@ button:disabled {
   color: #ffffff;
 }
 
-.result-panel {
-  min-height: 580px;
-  display: flex;
-  flex-direction: column;
-}
-
-.result-meta {
-  min-height: 24px;
-  margin-bottom: 10px;
-}
-
-#result-output {
-  flex: 1;
-  min-height: 430px;
-  margin: 0;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #0f172a;
-  color: #eef4ff;
-  padding: 16px;
-  font-family:
-    "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
 .notice {
   margin-top: 18px;
   padding: 14px 16px;

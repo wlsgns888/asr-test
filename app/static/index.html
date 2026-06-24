@@ -6,6 +6,7 @@
     <title>회의록 워크벤치</title>
     <link rel="stylesheet" href="/static/base.css" />
     <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/output.css" />
     <link rel="stylesheet" href="/static/responsive.css" />
   </head>
   <body>
@@ -74,12 +75,42 @@
         <section class="panel result-panel" aria-labelledby="result-title">
           <div class="panel-heading">
             <h2 id="result-title">결과</h2>
-            <button class="secondary-action" id="copy-button" type="button" disabled>
-              복사
-            </button>
+            <div class="result-actions">
+              <button
+                class="secondary-action"
+                id="download-button"
+                type="button"
+                disabled
+              >
+                Markdown 다운로드
+              </button>
+              <button
+                class="secondary-action"
+                id="copy-button"
+                type="button"
+                disabled
+              >
+                복사
+              </button>
+            </div>
           </div>
           <div class="result-meta" id="result-meta">아직 생성된 회의록이 없습니다.</div>
-          <pre id="result-output" tabindex="0"></pre>
+          <div class="output-grid">
+            <section class="output-pane" aria-labelledby="source-title">
+              <div class="output-heading">
+                <h3 id="source-title">원본 전사</h3>
+                <span id="source-meta">대기</span>
+              </div>
+              <pre id="source-output" tabindex="0"></pre>
+            </section>
+            <section class="output-pane" aria-labelledby="minutes-title">
+              <div class="output-heading">
+                <h3 id="minutes-title">회의록</h3>
+                <span id="minutes-meta">대기</span>
+              </div>
+              <pre id="result-output" tabindex="0"></pre>
+            </section>
+          </div>
         </section>
       </section>
 
