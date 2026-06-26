@@ -88,6 +88,7 @@ def test_pyannote_diarization_without_token_returns_stable_503(
         app_env=AppEnv.TESTING,
         asr_engine="fake",
         diarization_engine=DiarizationEngine.PYANNOTE,
+        diarization_hf_token=SecretStr(""),
         llm_provider=LLMProvider.FAKE,
         llm_api_key=SecretStr("test-key"),
         llm_model="fake-minutes",

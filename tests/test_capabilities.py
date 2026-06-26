@@ -1,10 +1,21 @@
+from app.config import AlignmentEngine, AppEnv, DiarizationEngine, LLMProvider, Settings
 from app.main import create_app
 from app.routes.capabilities import CapabilitiesResponse
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
 
 def test_capabilities_explain_speaker_separation_status() -> None:
-    client = TestClient(create_app())
+    settings = Settings(
+        app_env=AppEnv.TESTING,
+        alignment_engine=AlignmentEngine.DISABLED,
+        diarization_engine=DiarizationEngine.DISABLED,
+        diarization_hf_token=SecretStr(""),
+        llm_provider=LLMProvider.FAKE,
+        llm_api_key=SecretStr("test-key"),
+        llm_model="fake-minutes",
+    )
+    client = TestClient(create_app(settings))
 
     response = client.get("/capabilities")
 

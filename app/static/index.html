@@ -52,6 +52,17 @@
             회의록 생성
           </button>
 
+          <section class="progress-panel" aria-live="polite">
+            <div class="progress-copy">
+              <strong id="progress-title">대기 중</strong>
+              <span id="progress-detail">음성 파일을 선택하면 처리를 시작합니다.</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span id="progress-bar"></span>
+            </div>
+            <ol class="progress-log" id="progress-log"></ol>
+          </section>
+
           <div class="steps" aria-label="처리 단계">
             <div class="step" data-step="upload">
               <span>1</span>
@@ -119,6 +130,7 @@
       </section>
     </main>
 
+    <script src="/static/progress.js" defer></script>
     <script src="/static/app.js" defer></script>
   </body>
 </html>

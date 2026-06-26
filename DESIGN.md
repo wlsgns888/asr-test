@@ -40,7 +40,7 @@ large hero treatments.
 
 ## Capability Disclosure
 
-Speaker separation is not currently available in the shipped Qwen3-ASR MLX
-worker. The UI must expose this plainly instead of implying diarization support.
-The implementation is technically possible only with an additional diarization
-backend and transcript alignment work.
+Speaker separation is available when `pyannote/speaker-diarization-community-1`
+is configured with a Hugging Face token. The UI must show whether the local
+runtime is configured and must keep users informed during long ASR, diarization,
+and forced-alignment work.

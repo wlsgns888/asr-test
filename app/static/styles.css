@@ -31,6 +31,14 @@
   white-space: nowrap;
 }
 
+.capability strong.is-ok {
+  color: var(--success);
+}
+
+.capability strong.is-warning {
+  color: var(--warning);
+}
+
 .panel,
 .notice {
   border: 1px solid var(--border);
@@ -119,6 +127,84 @@ textarea {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.56;
+}
+
+.progress-panel {
+  display: flex;
+  min-height: 122px;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fbfcfe;
+  padding: 12px;
+}
+
+.progress-copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-copy strong {
+  flex: 0 0 auto;
+  font-size: 0.92rem;
+}
+
+.progress-copy span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.progress-track {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7edf8;
+}
+
+#progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transition:
+    width 180ms ease,
+    transform 220ms ease,
+    background-color 180ms ease;
+}
+
+#progress-bar.is-indeterminate {
+  animation: progress-sweep 1.2s ease-in-out infinite;
+}
+
+#progress-bar.is-error {
+  background: var(--error);
+}
+
+.progress-log {
+  display: grid;
+  max-height: 54px;
+  margin: 0;
+  overflow: auto;
+  gap: 4px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@keyframes progress-sweep {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  100% {
+    transform: translateX(280%);
+  }
 }
 
 .steps {

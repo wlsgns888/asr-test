@@ -52,5 +52,5 @@ async def create_transcript(
     except AlignmentWorkerError as error:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Alignment worker failed",
+            detail=str(error),
         ) from error
