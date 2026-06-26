@@ -23,7 +23,11 @@ async def create_transcript(
     asr: ASRDep,
 ) -> TranscriptSummary:
     try:
-        return await run_in_threadpool(asr.transcribe_upload, payload.upload_id)
+        return await run_in_threadpool(
+            asr.transcribe_upload,
+            payload.upload_id,
+            payload.speaker_separation_enabled,
+        )
     except ArtifactNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

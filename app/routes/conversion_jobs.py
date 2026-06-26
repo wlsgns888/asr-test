@@ -36,7 +36,10 @@ async def create_conversion_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Upload not found",
         ) from error
-    job = conversion_jobs.create(payload.upload_id)
+    job = conversion_jobs.create(
+        payload.upload_id,
+        speaker_separation_enabled=payload.speaker_separation_enabled,
+    )
     if settings.app_env.value == "testing":
         await run_in_threadpool(conversion_jobs.run, job.job_id, settings)
     else:

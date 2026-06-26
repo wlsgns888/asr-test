@@ -1,10 +1,13 @@
 const form = document.querySelector("#minutes-form");
 const fileInput = document.querySelector("#audio-file");
+const speakerToggle = document.querySelector("#speaker-separation-enabled");
+const summaryPromptInput = document.querySelector("#summary-prompt");
 const templateInput = document.querySelector("#template");
 const runButton = document.querySelector("#run-button");
 const runState = document.querySelector("#run-state");
 const resultOutput = document.querySelector("#result-output");
 const resultMeta = document.querySelector("#result-meta");
+const timingBreakdown = document.querySelector("#timing-breakdown");
 const sourceOutput = document.querySelector("#source-output");
 const sourceMeta = document.querySelector("#source-meta");
 const minutesMeta = document.querySelector("#minutes-meta");
@@ -21,6 +24,7 @@ const progress = window.createProgressView({
   bar: progressBar,
   detail: progressDetail,
   log: progressLog,
+  timings: timingBreakdown,
   title: progressTitle,
 });
 
@@ -104,7 +108,7 @@ async function uploadAudio(file) {
       progress.set("업로드 중", `${percent}% 전송 완료`, percent);
     });
     request.addEventListener("load", () => {
-      const body = parseJsonResponse(request.responseText);
+      const body = window.parseJsonResponse(request.responseText);
       if (request.status < 200 || request.status >= 300) {
         reject(new Error(`${request.status} ${body.detail || request.statusText}`));
         return;
@@ -119,22 +123,13 @@ async function uploadAudio(file) {
   });
 }
 
-function parseJsonResponse(text) {
-  if (!text) {
-    return {};
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { detail: text };
-  }
-}
-
-async function startConversionJob(uploadId) {
+async function startConversionJob(uploadId, speakerSeparationEnabled) {
   return requestJson("/conversion-jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ upload_id: uploadId }),
+    body: JSON.stringify(
+      window.createConversionJobPayload(uploadId, speakerSeparationEnabled),
+    ),
   });
 }
 
@@ -149,7 +144,7 @@ async function waitForConversion(jobId) {
   if (status.status === "failed") {
     throw new Error(status.error || status.message || "음성 변환 실패");
   }
-  return status.transcript;
+  return status;
 }
 
 function delay(milliseconds) {
@@ -158,14 +153,13 @@ function delay(milliseconds) {
   });
 }
 
-async function createMinutes(transcriptId, template) {
+async function createMinutes(transcriptId, template, summaryPrompt) {
   return requestJson("/minutes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      transcript_id: transcriptId,
-      template,
-    }),
+    body: JSON.stringify(
+      window.createMinutesPayload(transcriptId, template, summaryPrompt),
+    ),
   });
 }
 
@@ -173,7 +167,7 @@ async function fetchResult(minutesId) {
   return requestJson(`/results/${minutesId}`);
 }
 
-function renderResult(result, transcript) {
+function renderResult(result, transcript, timings) {
   resultMeta.textContent = `회의록 ID ${result.minutes_id} · 변환 ID ${transcript.transcript_id}`;
   sourceMeta.textContent = transcript.speaker_transcript
     ? `${transcript.language || "원본"} · 화자 구분`
@@ -186,6 +180,7 @@ function renderResult(result, transcript) {
   currentMinutesId = result.minutes_id;
   copyButton.disabled = false;
   downloadButton.disabled = false;
+  progress.renderTimings(timings);
 }
 
 function downloadMarkdown() {
@@ -235,15 +230,20 @@ form.addEventListener("submit", async (event) => {
     setStep("transcript", ["upload"]);
     progress.startTimed("음성 변환 중", "50분 음성은 보통 15-30분 이상 걸릴 수 있습니다.");
 
-    const job = await startConversionJob(upload.upload_id);
+    const job = await startConversionJob(upload.upload_id, speakerToggle.checked);
     progress.addLog("서버 변환 작업 시작");
-    const transcript = await waitForConversion(job.job_id);
+    const conversion = await waitForConversion(job.job_id);
+    const transcript = conversion.transcript;
     progress.addLog("음성 변환과 화자 정렬 완료");
     setBusy(true, "회의록 생성 중");
     setStep("minutes", ["upload", "transcript"]);
     progress.startTimed("회의록 생성 중", "변환된 내용을 Markdown 회의록으로 정리합니다.");
 
-    const minutes = await createMinutes(transcript.transcript_id, templateInput.value);
+    const minutes = await createMinutes(
+      transcript.transcript_id,
+      templateInput.value,
+      summaryPromptInput.value,
+    );
     progress.addLog("회의록 생성 완료");
     setBusy(true, "결과 저장 중");
     setStep("result", ["upload", "transcript", "minutes"]);
@@ -251,7 +251,7 @@ form.addEventListener("submit", async (event) => {
 
     const result = await fetchResult(minutes.minutes_id);
     progress.stop();
-    renderResult(result, transcript);
+    renderResult(result, transcript, conversion.timings);
     setStep(null, stepOrder);
     progress.set("완료", "회의록과 변환 원본이 준비됐습니다.", 100);
     progress.addLog("결과 표시 완료");

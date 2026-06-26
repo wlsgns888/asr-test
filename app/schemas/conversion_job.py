@@ -29,6 +29,7 @@ class ConversionJobCreateRequest(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     upload_id: str
+    speaker_separation_enabled: bool = True
 
     @field_validator("upload_id")
     @classmethod
@@ -57,17 +58,27 @@ class ConversionJobProgress(BaseModel):
     message: str
 
 
+class ConversionJobTiming(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    stage: ConversionJobStage
+    label: str
+    duration_seconds: float = Field(ge=0)
+
+
 class ConversionJobStatus(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     job_id: str
     upload_id: str
+    speaker_separation_enabled: bool = True
     status: ConversionJobStatusValue
     stage: ConversionJobStage
     percent: int = Field(ge=0, le=100)
     message: str
     transcript_id: str | None = None
     transcript: TranscriptSummary | None = None
+    timings: list[ConversionJobTiming] = Field(default_factory=list)
     error: str | None = None
 
 

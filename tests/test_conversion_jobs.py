@@ -157,6 +157,11 @@ def test_conversion_job_reports_failed_when_asr_worker_fails(
     status = service.get(job.job_id)
     assert status.status == "failed"
     assert status.stage == "failed"
+    assert [timing.stage for timing in status.timings] == [
+        "loading",
+        "converting",
+        "recognizing",
+    ]
     assert status.error == "음성을 텍스트로 변환하는 데 실패했습니다."
 
 
@@ -202,6 +207,11 @@ def test_conversion_job_reports_failed_when_unexpected_worker_error_occurs(
     status = service.get(job.job_id)
     assert status.status == "failed"
     assert status.stage == "failed"
+    assert [timing.stage for timing in status.timings] == [
+        "loading",
+        "converting",
+        "recognizing",
+    ]
     assert status.error == "예상하지 못한 변환 오류가 발생했습니다: ValueError"
 
 
@@ -240,4 +250,5 @@ def test_conversion_job_reports_failed_when_engine_factory_crashes(
     status = service.get(job.job_id)
     assert status.status == "failed"
     assert status.stage == "failed"
+    assert [timing.stage for timing in status.timings] == ["loading"]
     assert status.error == "예상하지 못한 변환 오류가 발생했습니다: ValueError"

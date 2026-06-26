@@ -1,9 +1,13 @@
 from threading import RLock
+from time import perf_counter
+from typing import Final
 
 from app.config import Settings
 from app.schemas.conversion_job import (
     ConversionJobProgress,
+    ConversionJobStage,
     ConversionJobStatus,
+    ConversionJobTiming,
     new_conversion_job_id,
 )
 from app.services.alignment_service import (
@@ -24,16 +28,32 @@ class ConversionJobNotFoundError(RuntimeError):
     pass
 
 
+STAGE_TIMING_LABELS: Final[tuple[tuple[ConversionJobStage, str], ...]] = (
+    ("loading", "업로드 확인"),
+    ("converting", "WAV 변환"),
+    ("recognizing", "음성 인식"),
+    ("diarizing", "화자 구분"),
+    ("aligning", "화자 시간 정렬"),
+    ("saving", "결과 저장"),
+)
+
+
 class ConversionJobService:
     def __init__(self) -> None:
         self._lock: RLock = RLock()
         self._jobs: dict[str, ConversionJobStatus] = {}
+        self._stage_started_at: dict[str, float] = {}
 
-    def create(self, upload_id: str) -> ConversionJobStatus:
+    def create(
+        self,
+        upload_id: str,
+        speaker_separation_enabled: bool = True,
+    ) -> ConversionJobStatus:
         job_id = new_conversion_job_id()
         job = ConversionJobStatus(
             job_id=job_id,
             upload_id=upload_id,
+            speaker_separation_enabled=speaker_separation_enabled,
             status="queued",
             stage="queued",
             percent=0,
@@ -55,17 +75,27 @@ class ConversionJobService:
         job_id: str,
         progress: ConversionJobProgress,
     ) -> None:
-        job = self.get(job_id)
-        self._replace(
-            job.model_copy(
+        now = perf_counter()
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                raise ConversionJobNotFoundError
+            timings = job.timings
+            if progress.stage != job.stage:
+                started_at = self._stage_started_at.get(job_id)
+                timings = _append_stage_timing(job, started_at, now)
+                self._stage_started_at[job_id] = now
+            elif job_id not in self._stage_started_at:
+                self._stage_started_at[job_id] = now
+            self._jobs[job_id] = job.model_copy(
                 update={
                     "status": "running",
                     "stage": progress.stage,
                     "percent": progress.percent,
                     "message": progress.message,
+                    "timings": timings,
                 }
             )
-        )
 
     def run(self, job_id: str, settings: Settings) -> None:
         job = self.get(job_id)
@@ -87,6 +117,7 @@ class ConversionJobService:
             )
             transcript = service.transcribe_upload(
                 job.upload_id,
+                speaker_separation_enabled=job.speaker_separation_enabled,
                 progress=lambda progress: self.update_progress(job_id, progress),
             )
         except (
@@ -114,19 +145,31 @@ class ConversionJobService:
                 }
             )
         )
+        with self._lock:
+            _ = self._stage_started_at.pop(job_id, None)
 
     def _fail(self, job_id: str, message: str) -> None:
-        self._replace(
-            self.get(job_id).model_copy(
+        now = perf_counter()
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                raise ConversionJobNotFoundError
+            timings = _append_stage_timing(
+                job,
+                self._stage_started_at.get(job_id),
+                now,
+            )
+            _ = self._stage_started_at.pop(job_id, None)
+            self._jobs[job_id] = job.model_copy(
                 update={
                     "status": "failed",
                     "stage": "failed",
                     "percent": 100,
                     "message": message,
+                    "timings": timings,
                     "error": message,
                 }
             )
-        )
 
     def _replace(self, job: ConversionJobStatus) -> None:
         with self._lock:
@@ -150,3 +193,28 @@ def _job_error_message(error: RuntimeError) -> str:
 
 def _unexpected_job_error_message(error: Exception) -> str:
     return f"예상하지 못한 변환 오류가 발생했습니다: {type(error).__name__}"
+
+
+def _stage_timing_label(stage: ConversionJobStage) -> str | None:
+    for timing_stage, label in STAGE_TIMING_LABELS:
+        if stage == timing_stage:
+            return label
+    return None
+
+
+def _append_stage_timing(
+    job: ConversionJobStatus,
+    started_at: float | None,
+    now: float,
+) -> list[ConversionJobTiming]:
+    label = _stage_timing_label(job.stage)
+    if label is None or started_at is None:
+        return job.timings
+    return [
+        *job.timings,
+        ConversionJobTiming(
+            stage=job.stage,
+            label=label,
+            duration_seconds=round(now - started_at, 6),
+        ),
+    ]

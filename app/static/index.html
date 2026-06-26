@@ -41,9 +41,27 @@
             />
           </label>
 
+          <label class="toggle-field">
+            <input
+              id="speaker-separation-enabled"
+              name="speaker_separation_enabled"
+              type="checkbox"
+            />
+            <span class="toggle-control" aria-hidden="true"></span>
+            <span>
+              <strong>화자 구분 사용</strong>
+              <small>발화자별 원문이 필요할 때 켭니다.</small>
+            </span>
+          </label>
+
+          <label class="field">
+            <span>요약 프롬프트</span>
+            <textarea id="summary-prompt" rows="4" spellcheck="false">다음 변환 원본을 바탕으로 한국어 회의록을 간결하고 실행 가능하게 작성하세요. 핵심 논의, 결정사항, 액션아이템을 명확히 구분하세요.</textarea>
+          </label>
+
           <label class="field">
             <span>회의록 템플릿</span>
-            <textarea id="template" rows="5">- 회의 개요
+            <textarea id="template" rows="5" spellcheck="false">- 회의 개요
 - 핵심 논의
 - 결정사항
 - 액션아이템</textarea>
@@ -111,6 +129,7 @@
             </div>
           </div>
           <div class="result-meta" id="result-meta">아직 생성된 회의록이 없습니다.</div>
+          <div class="timing-breakdown" id="timing-breakdown" hidden>처리 시간</div>
           <div class="output-grid">
             <section class="output-pane" aria-labelledby="source-title">
               <div class="output-heading">
@@ -136,6 +155,7 @@
     </main>
 
     <script src="/static/progress.js" defer></script>
+    <script src="/static/payloads.js" defer></script>
     <script src="/static/app.js" defer></script>
   </body>
 </html>

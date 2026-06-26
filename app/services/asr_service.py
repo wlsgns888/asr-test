@@ -7,6 +7,7 @@ from typing import Protocol
 from app.config import Settings
 from app.schemas.conversion_job import ConversionJobProgress, ConversionJobStage
 from app.schemas.transcript import (
+    SpeakerSegment,
     TimedTranscriptSegment,
     TranscriptDocument,
     TranscriptSummary,
@@ -98,6 +99,7 @@ class ASRService:
     def transcribe_upload(
         self,
         upload_id: str,
+        speaker_separation_enabled: bool = True,
         progress: ProgressReporter | None = None,
     ) -> TranscriptSummary:
         _report_progress(progress, "loading", 5, "업로드 파일을 확인하고 있습니다.")
@@ -108,13 +110,15 @@ class ASRService:
         wav_path = self.audio.convert_to_wav(source)
         _report_progress(progress, "recognizing", 35, "음성을 텍스트로 변환 중입니다.")
         transcript = self.engine.transcribe(wav_path)
-        _report_progress(progress, "diarizing", 60, "화자를 구분하고 있습니다.")
-        speaker_turns = self.diarization.diarize(wav_path)
-        if len(speaker_turns) > 0:
-            _report_progress(
-                progress, "aligning", 78, "텍스트와 화자 시간을 맞추고 있습니다."
-            )
-            transcript = self.alignment.align(wav_path, transcript)
+        speaker_turns: list[SpeakerSegment] = []
+        if speaker_separation_enabled:
+            _report_progress(progress, "diarizing", 60, "화자를 구분하고 있습니다.")
+            speaker_turns = self.diarization.diarize(wav_path)
+            if len(speaker_turns) > 0:
+                _report_progress(
+                    progress, "aligning", 78, "텍스트와 화자 시간을 맞추고 있습니다."
+                )
+                transcript = self.alignment.align(wav_path, transcript)
         _report_progress(progress, "saving", 92, "변환 결과를 저장하고 있습니다.")
         transcript = apply_speaker_labels(transcript, speaker_turns)
         summary = self.storage.save_transcript(upload_id, transcript)

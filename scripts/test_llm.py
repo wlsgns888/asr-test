@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from app.config import AppEnv, LLMProvider, Settings
+from app.schemas.minutes import DEFAULT_SUMMARY_PROMPT
 from app.services.llm_service import LLMService
 
 EXPECTED_ARG_COUNT = 2
@@ -38,6 +39,7 @@ def main() -> int:
     markdown = service.generate_minutes(
         transcript=sys.argv[1],
         template=DEFAULT_TEMPLATE,
+        summary_prompt=DEFAULT_SUMMARY_PROMPT,
     )
     print(markdown)
     return 0

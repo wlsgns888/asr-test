@@ -23,6 +23,7 @@ class TranscriptCreateRequest(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     upload_id: str
+    speaker_separation_enabled: bool = True
 
     @field_validator("upload_id")
     @classmethod

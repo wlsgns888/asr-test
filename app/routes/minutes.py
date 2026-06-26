@@ -22,6 +22,7 @@ async def create_minutes(
             minutes.create_minutes,
             payload.transcript_id,
             payload.template,
+            payload.summary_prompt,
         )
     except ArtifactNotFoundError as error:
         raise HTTPException(
