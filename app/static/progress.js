@@ -40,6 +40,27 @@ window.createProgressView = function createProgressView(elements) {
     }, 1000);
   }
 
+  function setFromJob(job) {
+    stop();
+    const elapsed = startedAt > 0 ? ` · 경과 ${formatElapsed(Date.now() - startedAt)}` : "";
+    set(stageTitle(job.stage), `${job.message || "처리 중입니다."}${elapsed}`, job.percent);
+  }
+
+  function stageTitle(stage) {
+    const titles = {
+      aligning: "화자 시간 맞추는 중",
+      completed: "변환 완료",
+      converting: "음성 파일 준비 중",
+      diarizing: "화자 구분 중",
+      failed: "변환 실패",
+      loading: "작업 확인 중",
+      queued: "대기 중",
+      recognizing: "음성을 텍스트로 변환 중",
+      saving: "결과 저장 중",
+    };
+    return titles[stage] || "음성 변환 중";
+  }
+
   function reset() {
     stop();
     elements.log.textContent = "";
@@ -58,6 +79,7 @@ window.createProgressView = function createProgressView(elements) {
     fail,
     reset,
     set,
+    setFromJob,
     startTimed,
     stop,
   };

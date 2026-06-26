@@ -1,3 +1,11 @@
+from app.schemas.conversion_job import (
+    ConversionJobCreateRequest,
+    ConversionJobProgress,
+    ConversionJobStage,
+    ConversionJobStartResponse,
+    ConversionJobStatus,
+    ConversionJobStatusValue,
+)
 from app.schemas.minutes import (
     MinutesArtifact,
     MinutesCreateRequest,
@@ -14,6 +22,12 @@ from app.schemas.transcript import (
 )
 
 __all__ = [
+    "ConversionJobCreateRequest",
+    "ConversionJobProgress",
+    "ConversionJobStage",
+    "ConversionJobStartResponse",
+    "ConversionJobStatus",
+    "ConversionJobStatusValue",
     "MinutesArtifact",
     "MinutesCreateRequest",
     "MinutesResult",

@@ -130,11 +130,31 @@ function parseJsonResponse(text) {
   }
 }
 
-async function createTranscript(uploadId) {
-  return requestJson("/transcripts", {
+async function startConversionJob(uploadId) {
+  return requestJson("/conversion-jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ upload_id: uploadId }),
+  });
+}
+
+async function waitForConversion(jobId) {
+  let status = await requestJson(`/conversion-jobs/${jobId}`);
+  while (status.status === "queued" || status.status === "running") {
+    progress.setFromJob(status);
+    await delay(1200);
+    status = await requestJson(`/conversion-jobs/${jobId}`);
+  }
+  progress.setFromJob(status);
+  if (status.status === "failed") {
+    throw new Error(status.error || status.message || "음성 변환 실패");
+  }
+  return status.transcript;
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
   });
 }
 
@@ -154,12 +174,12 @@ async function fetchResult(minutesId) {
 }
 
 function renderResult(result, transcript) {
-  resultMeta.textContent = `회의록 ID ${result.minutes_id} · 전사 ID ${transcript.transcript_id}`;
+  resultMeta.textContent = `회의록 ID ${result.minutes_id} · 변환 ID ${transcript.transcript_id}`;
   sourceMeta.textContent = transcript.speaker_transcript
     ? `${transcript.language || "원본"} · 화자 구분`
     : transcript.language || "원본";
   sourceOutput.textContent =
-    transcript.speaker_transcript || transcript.text || "(전사 원본 없음)";
+    transcript.speaker_transcript || transcript.text || "(변환 원본 없음)";
   minutesMeta.textContent = "Markdown";
   resultOutput.textContent = result.markdown;
   currentMarkdown = result.markdown;
@@ -211,18 +231,17 @@ form.addEventListener("submit", async (event) => {
     progress.addLog("업로드 시작");
     const upload = await uploadAudio(file);
     progress.addLog("업로드 완료");
-    setBusy(true, "전사 중");
+    setBusy(true, "변환 중");
     setStep("transcript", ["upload"]);
-    progress.startTimed(
-      "전사 · 화자 구분 · 정렬 중",
-      "Qwen ASR, pyannote, ForcedAligner가 순서대로 실행됩니다.",
-    );
+    progress.startTimed("음성 변환 중", "50분 음성은 보통 15-30분 이상 걸릴 수 있습니다.");
 
-    const transcript = await createTranscript(upload.upload_id);
-    progress.addLog("전사와 화자 정렬 완료");
+    const job = await startConversionJob(upload.upload_id);
+    progress.addLog("서버 변환 작업 시작");
+    const transcript = await waitForConversion(job.job_id);
+    progress.addLog("음성 변환과 화자 정렬 완료");
     setBusy(true, "회의록 생성 중");
     setStep("minutes", ["upload", "transcript"]);
-    progress.startTimed("회의록 생성 중", "전사 내용을 Markdown 회의록으로 변환합니다.");
+    progress.startTimed("회의록 생성 중", "변환된 내용을 Markdown 회의록으로 정리합니다.");
 
     const minutes = await createMinutes(transcript.transcript_id, templateInput.value);
     progress.addLog("회의록 생성 완료");
@@ -234,7 +253,7 @@ form.addEventListener("submit", async (event) => {
     progress.stop();
     renderResult(result, transcript);
     setStep(null, stepOrder);
-    progress.set("완료", "회의록과 원본 전사가 준비됐습니다.", 100);
+    progress.set("완료", "회의록과 변환 원본이 준비됐습니다.", 100);
     progress.addLog("결과 표시 완료");
     setBusy(false, "완료");
   } catch (error) {

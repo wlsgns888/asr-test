@@ -7,7 +7,14 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings
 from app.main_dependencies import get_settings
-from app.routes import capabilities, frontend, minutes, transcribe, upload
+from app.routes import (
+    capabilities,
+    conversion_jobs,
+    frontend,
+    minutes,
+    transcribe,
+    upload,
+)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -34,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(frontend.router)
     app.include_router(capabilities.router)
     app.include_router(upload.router)
+    app.include_router(conversion_jobs.router)
     app.include_router(transcribe.router)
     app.include_router(minutes.router)
     return app

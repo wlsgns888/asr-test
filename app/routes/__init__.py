@@ -1,3 +1,17 @@
-from app.routes import capabilities, frontend, minutes, transcribe, upload
+from app.routes import (
+    capabilities,
+    conversion_jobs,
+    frontend,
+    minutes,
+    transcribe,
+    upload,
+)
 
-__all__ = ["capabilities", "frontend", "minutes", "transcribe", "upload"]
+__all__ = [
+    "capabilities",
+    "conversion_jobs",
+    "frontend",
+    "minutes",
+    "transcribe",
+    "upload",
+]

@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>회의록 워크벤치</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/static/base.css" />
     <link rel="stylesheet" href="/static/styles.css" />
     <link rel="stylesheet" href="/static/output.css" />
@@ -60,6 +61,10 @@
             <div class="progress-track" aria-hidden="true">
               <span id="progress-bar"></span>
             </div>
+            <p class="progress-estimate">
+              50분 음성은 보통 15-30분 이상 걸릴 수 있으며, 첫 모델 다운로드나
+              장비 상태에 따라 1시간 이상 걸릴 수 있습니다.
+            </p>
             <ol class="progress-log" id="progress-log"></ol>
           </section>
 
@@ -70,7 +75,7 @@
             </div>
             <div class="step" data-step="transcript">
               <span>2</span>
-              <strong>전사</strong>
+              <strong>변환</strong>
             </div>
             <div class="step" data-step="minutes">
               <span>3</span>
@@ -109,7 +114,7 @@
           <div class="output-grid">
             <section class="output-pane" aria-labelledby="source-title">
               <div class="output-heading">
-                <h3 id="source-title">원본 전사</h3>
+                <h3 id="source-title">원본 변환</h3>
                 <span id="source-meta">대기</span>
               </div>
               <pre id="source-output" tabindex="0"></pre>

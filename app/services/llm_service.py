@@ -44,7 +44,7 @@ class LLMService:
         return (
             "# 회의록\n\n"
             "## 회의 개요\n"
-            f"- 전사 요약: {transcript}\n\n"
+            f"- 변환 원본 요약: {transcript}\n\n"
             "## 주요 논의사항\n"
             "- 확인 필요\n\n"
             "## 결정사항\n"
@@ -57,9 +57,9 @@ class LLMService:
 
     def _prompt(self, transcript: str, template: str) -> str:
         return (
-            "아래 전사문을 기반으로 회의록을 작성한다.\n"
+            "아래 음성 변환 원본을 기반으로 회의록을 작성한다.\n"
             "내용을 과장하거나 없는 내용을 추가하지 않는다.\n"
             '불명확한 내용은 "확인 필요"로 표시한다.\n\n'
             f"[출력 형식]\n{template}\n\n"
-            f"[전사문]\n{transcript}"
+            f"[음성 변환 원본]\n{transcript}"
         )
