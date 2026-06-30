@@ -32,8 +32,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 28px;
+  min-height: 36px;
   margin-bottom: 8px;
+}
+
+.output-title {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .output-heading h3 {
@@ -49,9 +56,24 @@
   font-weight: 700;
 }
 
+.output-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.compact-action {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 #source-output,
 #result-output {
   flex: 1;
+  height: min(58vh, 640px);
+  max-height: 640px;
   min-height: 430px;
   margin: 0;
   overflow: auto;

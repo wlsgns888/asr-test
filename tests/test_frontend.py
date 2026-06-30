@@ -23,8 +23,12 @@ def test_root_serves_frontend_shell() -> None:
     assert "전문 회의록으로 요약하세요" in response.text
     assert "액션아이템(담당자/기한이 언급된 경우 포함)" in response.text
     assert "처리 시간" in response.text
-    assert "Markdown 다운로드" in response.text
+    assert 'id="copy-source-button"' in response.text
+    assert 'id="download-source-button"' in response.text
+    assert 'id="copy-minutes-button"' in response.text
+    assert 'id="download-minutes-button"' in response.text
     assert "/static/payloads.js" in response.text
+    assert "/static/result-view.js" in response.text
     assert "/static/app.js" in response.text
 
 
@@ -36,7 +40,32 @@ def test_static_frontend_assets_are_served() -> None:
     assert response.status_code == 200
     assert "javascript" in response.headers["content-type"]
     assert "fetch(" in response.text
-    assert "downloadMarkdown" in response.text
+
+
+def test_static_result_view_asset_is_served() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/static/result-view.js")
+
+    assert response.status_code == 200
+    assert "javascript" in response.headers["content-type"]
+    assert "createResultView" in response.text
+    assert "downloadContentAsMarkdown" in response.text
+
+
+def test_result_panes_expose_independent_actions_and_scroll_contract() -> None:
+    client = TestClient(create_app())
+
+    html = client.get("/").text
+    css = client.get("/static/output.css").text
+
+    assert "원본 Markdown" in html
+    assert "원본 복사" in html
+    assert "회의록 Markdown" in html
+    assert "회의록 복사" in html
+    assert 'class="output-body"' in html
+    assert "max-height:" in css
+    assert "overflow: auto" in css
 
 
 def test_frontend_payload_helpers_send_new_backend_contract() -> None:

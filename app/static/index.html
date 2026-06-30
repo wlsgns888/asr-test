@@ -111,41 +111,63 @@
         <section class="panel result-panel" aria-labelledby="result-title">
           <div class="panel-heading">
             <h2 id="result-title">결과</h2>
-            <div class="result-actions">
-              <button
-                class="secondary-action"
-                id="download-button"
-                type="button"
-                disabled
-              >
-                Markdown 다운로드
-              </button>
-              <button
-                class="secondary-action"
-                id="copy-button"
-                type="button"
-                disabled
-              >
-                복사
-              </button>
-            </div>
           </div>
           <div class="result-meta" id="result-meta">아직 생성된 회의록이 없습니다.</div>
           <div class="timing-breakdown" id="timing-breakdown" hidden>처리 시간</div>
           <div class="output-grid">
             <section class="output-pane" aria-labelledby="source-title">
               <div class="output-heading">
-                <h3 id="source-title">원본 변환</h3>
-                <span id="source-meta">대기</span>
+                <div class="output-title">
+                  <h3 id="source-title">원본 변환</h3>
+                  <span id="source-meta">대기</span>
+                </div>
+                <div class="output-actions">
+                  <button
+                    class="secondary-action compact-action"
+                    id="download-source-button"
+                    type="button"
+                    disabled
+                  >
+                    원본 Markdown
+                  </button>
+                  <button
+                    class="secondary-action compact-action"
+                    id="copy-source-button"
+                    type="button"
+                    disabled
+                  >
+                    원본 복사
+                  </button>
+                </div>
               </div>
-              <pre id="source-output" tabindex="0"></pre>
+              <pre class="output-body" id="source-output" tabindex="0"></pre>
             </section>
             <section class="output-pane" aria-labelledby="minutes-title">
               <div class="output-heading">
-                <h3 id="minutes-title">회의록</h3>
-                <span id="minutes-meta">대기</span>
+                <div class="output-title">
+                  <h3 id="minutes-title">회의록</h3>
+                  <span id="minutes-meta">대기</span>
+                </div>
+                <div class="output-actions">
+                  <button
+                    class="secondary-action compact-action"
+                    id="download-minutes-button"
+                    type="button"
+                    disabled
+                  >
+                    회의록 Markdown
+                  </button>
+                  <button
+                    class="secondary-action compact-action"
+                    id="copy-minutes-button"
+                    type="button"
+                    disabled
+                  >
+                    회의록 복사
+                  </button>
+                </div>
               </div>
-              <pre id="result-output" tabindex="0"></pre>
+              <pre class="output-body" id="result-output" tabindex="0"></pre>
             </section>
           </div>
         </section>
@@ -158,6 +180,7 @@
 
     <script src="/static/progress.js" defer></script>
     <script src="/static/payloads.js" defer></script>
+    <script src="/static/result-view.js" defer></script>
     <script src="/static/app.js" defer></script>
   </body>
 </html>

@@ -5,14 +5,7 @@ const summaryPromptInput = document.querySelector("#summary-prompt");
 const templateInput = document.querySelector("#template");
 const runButton = document.querySelector("#run-button");
 const runState = document.querySelector("#run-state");
-const resultOutput = document.querySelector("#result-output");
-const resultMeta = document.querySelector("#result-meta");
 const timingBreakdown = document.querySelector("#timing-breakdown");
-const sourceOutput = document.querySelector("#source-output");
-const sourceMeta = document.querySelector("#source-meta");
-const minutesMeta = document.querySelector("#minutes-meta");
-const copyButton = document.querySelector("#copy-button");
-const downloadButton = document.querySelector("#download-button");
 const speakerStatus = document.querySelector("#speaker-status");
 const speakerNote = document.querySelector("#speaker-note");
 const steps = [...document.querySelectorAll(".step")];
@@ -27,10 +20,9 @@ const progress = window.createProgressView({
   timings: timingBreakdown,
   title: progressTitle,
 });
+const resultView = window.createResultView();
 
 const stepOrder = ["upload", "transcript", "minutes", "result"];
-let currentMarkdown = "";
-let currentMinutesId = "";
 
 function setStep(current, complete = []) {
   steps.forEach((step) => {
@@ -47,15 +39,7 @@ function setBusy(isBusy, label) {
 
 function showError(message) {
   progress.stop();
-  resultMeta.textContent = "오류가 발생했습니다.";
-  resultOutput.textContent = message;
-  sourceOutput.textContent = "";
-  sourceMeta.textContent = "대기";
-  minutesMeta.textContent = "실패";
-  copyButton.disabled = true;
-  downloadButton.disabled = true;
-  currentMarkdown = "";
-  currentMinutesId = "";
+  resultView.showError(message);
 }
 
 async function requestJson(url, options = {}) {
@@ -168,38 +152,8 @@ async function fetchResult(minutesId) {
 }
 
 function renderResult(result, transcript, timings) {
-  resultMeta.textContent = `회의록 ID ${result.minutes_id} · 변환 ID ${transcript.transcript_id}`;
-  sourceMeta.textContent = transcript.speaker_transcript
-    ? `${transcript.language || "원본"} · 화자 구분`
-    : transcript.language || "원본";
-  sourceOutput.textContent =
-    transcript.speaker_transcript || transcript.text || "(변환 원본 없음)";
-  minutesMeta.textContent = "Markdown";
-  resultOutput.textContent = result.markdown;
-  currentMarkdown = result.markdown;
-  currentMinutesId = result.minutes_id;
-  copyButton.disabled = false;
-  downloadButton.disabled = false;
+  resultView.render(result, transcript);
   progress.renderTimings(timings);
-}
-
-function downloadMarkdown() {
-  if (!currentMarkdown) {
-    return;
-  }
-
-  const fileName = currentMinutesId
-    ? `meeting-minutes-${currentMinutesId}.md`
-    : "meeting-minutes.md";
-  const blob = new Blob([currentMarkdown], {
-    type: "text/markdown;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 form.addEventListener("submit", async (event) => {
@@ -210,14 +164,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  resultOutput.textContent = "";
-  sourceOutput.textContent = "";
-  sourceMeta.textContent = "대기";
-  minutesMeta.textContent = "대기";
-  copyButton.disabled = true;
-  downloadButton.disabled = true;
-  currentMarkdown = "";
-  currentMinutesId = "";
+  resultView.clear();
   progress.reset();
   setBusy(true, "업로드 중");
   setStep("upload");
@@ -262,13 +209,6 @@ form.addEventListener("submit", async (event) => {
     setBusy(false, "실패");
   }
 });
-
-copyButton.addEventListener("click", async () => {
-  await navigator.clipboard.writeText(resultOutput.textContent);
-  resultMeta.textContent = "회의록 내용을 클립보드에 복사했습니다.";
-});
-
-downloadButton.addEventListener("click", downloadMarkdown);
 
 progress.reset();
 loadCapabilities();
