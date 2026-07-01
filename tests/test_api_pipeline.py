@@ -340,9 +340,10 @@ def test_minutes_creation_uses_default_minutes_prompt_when_omitted(
     result = MinutesResult.model_validate_json(
         client.get(f"/results/{minutes.minutes_id}").text,
     )
-    assert "주요 논의사항" in result.markdown
-    assert "참석자: 자동 추정하지 않음" in result.markdown
-    assert "(이름 나열)" not in result.markdown
+    assert "회사 내부 공유용 회의록" in result.markdown
+    assert "회의 목적" in result.markdown
+    assert "| 할 일 | 담당자 | 기한 | 비고 |" in result.markdown
+    assert "담당자나 기한이 명확하지 않으면 “미정”으로 표시" in result.markdown
 
 
 def test_minutes_prompt_management_persists_in_project_folder(
