@@ -26,8 +26,12 @@ def test_root_serves_frontend_shell() -> None:
     assert "회의록 템플릿" not in response.text
     assert 'id="summary-prompt"' not in response.text
     assert 'id="template"' not in response.text
-    assert "아래 회의 메모를 바탕으로 공식 회의록을 작성해주세요" in response.text
-    assert "[회의 정보] - 회의명: (회의 제목)" in response.text
+    assert "아래 음성 변환 원본을 바탕으로 공식 회의록을 작성해주세요" in response.text
+    assert "원본에 없는 내용은 추정하거나 보강하지 마세요" in response.text
+    assert "[회의 정보]" in response.text
+    assert "참석자: 자동 추정하지 않음" in response.text
+    assert "확인된 이름이 있을 때만 기재" in response.text
+    assert "(이름 나열)" not in response.text
     assert "액션 아이템 (담당자/업무내용/마감일 표 형식)" in response.text
     assert "처리 시간" in response.text
     assert 'id="copy-source-button"' in response.text

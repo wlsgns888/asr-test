@@ -341,6 +341,8 @@ def test_minutes_creation_uses_default_minutes_prompt_when_omitted(
         client.get(f"/results/{minutes.minutes_id}").text,
     )
     assert "주요 논의사항" in result.markdown
+    assert "참석자: 자동 추정하지 않음" in result.markdown
+    assert "(이름 나열)" not in result.markdown
 
 
 def test_minutes_prompt_management_persists_in_project_folder(
