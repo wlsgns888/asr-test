@@ -7,9 +7,9 @@ from pydantic import Field, SecretStr, model_validator
 from pydantic_core import PydanticCustomError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEFAULT_ASR_MODEL: Final = "mlx-community/Qwen3-ASR-0.6B-4bit"
-DEFAULT_ALIGNMENT_MODEL: Final = "mlx-community/Qwen3-ForcedAligner-0.6B-8bit"
-DEFAULT_DIARIZATION_MODEL: Final = "pyannote/speaker-diarization-community-1"
+DEFAULT_ASR_MODEL: Final = "models/Qwen3-ASR-0.6B-4bit"
+DEFAULT_ALIGNMENT_MODEL: Final = "models/Qwen3-ForcedAligner-0.6B-8bit"
+DEFAULT_DIARIZATION_MODEL: Final = "models/pyannote-speaker-diarization-community-1"
 DEFAULT_LLM_BASE_URL: Final = "https://api.z.ai/api/paas/v4"
 FAKE_ADAPTER_ERROR_CODE: Final = "fake_adapter_environment"
 FAKE_ADAPTER_ERROR_MESSAGE: Final = "fake adapters require APP_ENV=testing"

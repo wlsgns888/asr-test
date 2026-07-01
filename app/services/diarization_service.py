@@ -44,11 +44,14 @@ class PyannoteDiarizationBackend:
 
     def diarize(self, wav_path: Path) -> list[SpeakerSegment]:
         token = self.settings.diarization_hf_token.get_secret_value()
-        if token == "":
+        if token == "" and not is_local_model_reference(
+            self.settings.diarization_model
+        ):
             raise DiarizationConfigurationError
 
         env = os.environ.copy()
-        env["PYANNOTE_AUTH_TOKEN"] = token
+        if token != "":
+            env["PYANNOTE_AUTH_TOKEN"] = token
         command = [
             sys.executable,
             "-m",
@@ -75,6 +78,10 @@ class PyannoteDiarizationBackend:
             raise DiarizationWorkerError(stderr.strip()) from error
 
         return TypeAdapter(list[SpeakerSegment]).validate_json(completed.stdout)
+
+
+def is_local_model_reference(model: str) -> bool:
+    return Path(model).expanduser().exists()
 
 
 def create_diarization_backend(settings: Settings) -> DiarizationBackend:

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.config import DiarizationEngine
 from app.main_dependencies import SettingsDep
+from app.services.diarization_service import is_local_model_reference
 
 router = APIRouter(tags=["capabilities"])
 
@@ -33,13 +34,18 @@ async def get_capabilities(settings: SettingsDep) -> CapabilitiesResponse:
     status: Literal["configured", "requires_configuration"] = (
         "configured" if available else "requires_configuration"
     )
-    enabled_prefix = "Diarization is enabled. pyannote mode still requires"
+    local_model = is_local_model_reference(settings.diarization_model)
     enabled_limitation = (
-        f"{enabled_prefix} a Hugging Face token with accepted model terms."
+        "Diarization is enabled with the bundled local pyannote model."
+        if local_model
+        else (
+            "Diarization is enabled with a remote Hugging Face model and still "
+            "requires a token with accepted model terms."
+        )
     )
     disabled_prefix = "Diarization is implemented but disabled."
-    disabled_action = "Set DIARIZATION_ENGINE=pyannote and DIARIZATION_HF_TOKEN"
-    disabled_terms = "after accepting the Hugging Face model terms."
+    disabled_action = "Set DIARIZATION_ENGINE=pyannote"
+    disabled_terms = "to use the bundled local pyannote model without a token."
     disabled_limitation = f"{disabled_prefix} {disabled_action} {disabled_terms}"
     limitation = enabled_limitation if available else disabled_limitation
     return CapabilitiesResponse(

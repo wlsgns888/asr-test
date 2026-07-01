@@ -7,11 +7,18 @@ OpenAI-compatible LLM API.
 ## Setup
 
 ```bash
+git lfs install
+git lfs pull
 uv sync
 cp .env.example .env
 ```
 
-Install `ffmpeg` and use an Apple Silicon Mac for the MLX ASR path.
+Install `ffmpeg` and use an Apple Silicon Mac for the MLX ASR path. The Qwen3
+ASR, Qwen3 ForcedAligner, and pyannote community diarization snapshots are
+vendored under `models/` and tracked with Git LFS, so a normal user does not
+need a Hugging Face token for the default local model setup. If `git lfs pull`
+is skipped, the files under `models/` remain small pointer files and the local
+workers cannot load them.
 
 Fill `.env` with the target provider values. Development can use z.ai:
 
@@ -42,6 +49,13 @@ LLM_PROVIDER=fake
 
 Fake adapters are rejected outside `APP_ENV=testing` so development and
 production settings do not accidentally bypass the real ASR/LLM paths.
+
+If you want speaker separation enabled for local development, install the
+optional diarization dependencies once:
+
+```bash
+uv sync --extra diarization
+```
 
 ## Run
 
@@ -100,7 +114,7 @@ The default engine launches `app.workers.qwen3_asr_worker` in a subprocess so
 the FastAPI process does not retain the ASR model after each job. Install
 `mlx-audio` in the target Mac environment before running the Qwen3-ASR engine.
 The worker calls `mlx_audio.stt.generate` with
-`mlx-community/Qwen3-ASR-0.6B-4bit`. When speaker diarization is enabled, the app
+`models/Qwen3-ASR-0.6B-4bit`. When speaker diarization is enabled, the app
 also runs Qwen3 ForcedAligner to replace coarse ASR timing with word or short
 phrase timestamps before speaker labels are applied.
 
@@ -121,23 +135,24 @@ Configure `.env`:
 ```env
 APP_ENV=development
 ASR_ENGINE=qwen3_asr_mlx
-ASR_MODEL=mlx-community/Qwen3-ASR-0.6B-4bit
+ASR_MODEL=models/Qwen3-ASR-0.6B-4bit
 ASR_LANGUAGE=ko
 ALIGNMENT_ENGINE=qwen3_forced_mlx
-ALIGNMENT_MODEL=mlx-community/Qwen3-ForcedAligner-0.6B-8bit
+ALIGNMENT_MODEL=models/Qwen3-ForcedAligner-0.6B-8bit
 ```
 
 `ASR_MODEL` can be changed to another MLX-compatible Hugging Face ASR model,
 but the worker expects the `mlx_audio.stt.generate` CLI to support it. The
-default model is public and is cached under the local Hugging Face cache,
-typically `~/.cache/huggingface/hub/`.
+default model is already included in this repository under `models/`. If you
+change it back to a Hugging Face model id, the first run downloads and caches it
+under `~/.cache/huggingface/hub/`.
 
 Run a model-only smoke test with an existing audio file:
 
 ```bash
 APP_ENV=development \
 ASR_ENGINE=qwen3_asr_mlx \
-ASR_MODEL=mlx-community/Qwen3-ASR-0.6B-4bit \
+ASR_MODEL=models/Qwen3-ASR-0.6B-4bit \
 ASR_LANGUAGE=ko \
 LLM_PROVIDER=zai \
 LLM_API_KEY=dummy \
@@ -149,7 +164,7 @@ Expected output shape:
 
 ```json
 {
-  "model": "mlx-community/Qwen3-ASR-0.6B-4bit",
+  "model": "models/Qwen3-ASR-0.6B-4bit",
   "language": "ko",
   "text": "...",
   "segments": ["..."]
@@ -163,7 +178,7 @@ WAV with `ffmpeg` before the worker starts.
 ### Word/Phrase Alignment
 
 `ALIGNMENT_ENGINE=qwen3_forced_mlx` keeps Qwen3-ASR as the transcript source and
-uses `mlx-community/Qwen3-ForcedAligner-0.6B-8bit` only to create finer
+uses `models/Qwen3-ForcedAligner-0.6B-8bit` only to create finer
 timestamps for the recognized text. This is the recommended mode for meeting
 audio because pyannote speaker turns can then be reconciled against short text
 spans instead of one long ASR segment.
@@ -191,25 +206,28 @@ meeting-style multilingual benchmark results including AISHELL-4 and
 AliMeeting. The app aligns pyannote speaker turns with Qwen3 ForcedAligner
 timestamps and stores both `speaker_segments` and `speaker_transcript`.
 
-Configure real diarization:
+Configure real diarization with the bundled local model:
 
 ```env
 DIARIZATION_ENGINE=pyannote
-DIARIZATION_MODEL=pyannote/speaker-diarization-community-1
-DIARIZATION_HF_TOKEN=<hugging-face-token>
+DIARIZATION_MODEL=models/pyannote-speaker-diarization-community-1
+DIARIZATION_HF_TOKEN=
 ```
 
-Before the first run, accept the model terms on Hugging Face for
-`pyannote/speaker-diarization-community-1`, create a token with model download
-access, and install `pyannote.audio` in a Python version supported by pyannote:
+The model files are committed to this repository with Git LFS. With the local
+`models/...` path above, `DIARIZATION_HF_TOKEN` is not required. Install
+`pyannote.audio` in a Python version supported by pyannote:
 
 ```bash
 uv sync --extra diarization
 ```
 
-The token is passed to the worker through `PYANNOTE_AUTH_TOKEN` and is not sent
-as a command-line argument. If `DIARIZATION_ENGINE=pyannote` is set without a
-token, `/transcripts` returns `503 Diarization is not configured`.
+If you replace `DIARIZATION_MODEL` with a remote Hugging Face id such as
+`pyannote/speaker-diarization-community-1`, then you must accept the model terms
+on Hugging Face and provide `DIARIZATION_HF_TOKEN`. The token is passed to the
+worker through `PYANNOTE_AUTH_TOKEN` and is not sent as a command-line argument.
+If a remote model is configured without a token, `/transcripts` returns
+`503 Diarization is not configured`.
 
 For CI or local contract tests only:
 
@@ -227,7 +245,8 @@ against a five-minute `simple_test` audio chunk.
 
 ### About `pyannote/speaker-diarization-3.1`
 
-The app can be pointed at 3.1 by changing only the model value:
+The app can be pointed at remote 3.1 by changing the model value and adding a
+Hugging Face token:
 
 ```env
 DIARIZATION_ENGINE=pyannote

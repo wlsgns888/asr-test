@@ -66,7 +66,7 @@ async function loadCapabilities() {
     speakerStatus.classList.toggle("is-warning", !speaker.available);
     speakerNote.textContent = speaker.available
       ? `${speaker.engine} 엔진으로 발화자 구분을 사용할 수 있습니다.`
-      : "발화자 구분 코드는 적용되어 있으며, pyannote 모델 사용을 위해 Hugging Face 토큰과 모델 조건 수락이 필요합니다.";
+      : "발화자 구분 코드는 적용되어 있습니다. 레포에 포함된 pyannote 모델을 쓰려면 DIARIZATION_ENGINE=pyannote로 설정하세요.";
     speakerNote.classList.toggle("is-warning", !speaker.available);
   } catch (error) {
     speakerStatus.textContent = "확인 실패";

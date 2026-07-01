@@ -36,7 +36,7 @@ def parse_args() -> WorkerArgs:
 
 def diarize(audio: Path, model: str) -> list[SpeakerSegment]:
     token = os.environ.get("PYANNOTE_AUTH_TOKEN", "")
-    if token == "":
+    if token == "" and not Path(model).expanduser().exists():
         message = "PYANNOTE_AUTH_TOKEN is required"
         raise WorkerConfigurationError(message)
 
@@ -45,7 +45,7 @@ def diarize(audio: Path, model: str) -> list[SpeakerSegment]:
     except ModuleNotFoundError as error:
         raise WorkerConfigurationError(MISSING_DEPENDENCY_MESSAGE) from error
 
-    pipeline = Pipeline.from_pretrained(model, token=token)
+    pipeline = Pipeline.from_pretrained(model, token=token or None)
     if pipeline is None:
         message = "pyannote pipeline could not be loaded"
         raise WorkerConfigurationError(message)

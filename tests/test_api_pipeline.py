@@ -83,13 +83,14 @@ def test_upload_rejects_unsupported_file_types(client: TestClient) -> None:
     assert response.json()["detail"] == "Unsupported audio extension"
 
 
-def test_pyannote_diarization_without_token_returns_stable_503(
+def test_remote_pyannote_diarization_without_token_returns_stable_503(
     tmp_path: Path,
 ) -> None:
     settings = Settings(
         app_env=AppEnv.TESTING,
         asr_engine="fake",
         diarization_engine=DiarizationEngine.PYANNOTE,
+        diarization_model="pyannote/speaker-diarization-community-1",
         diarization_hf_token=SecretStr(""),
         llm_provider=LLMProvider.FAKE,
         llm_api_key=SecretStr("test-key"),
