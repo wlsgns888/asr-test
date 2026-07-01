@@ -45,6 +45,7 @@ def test_pipeline_creates_transcript_and_minutes_when_fake_adapters_enabled(
     transcript = TranscriptSummary.model_validate_json(transcript_response.text)
     transcript_id = transcript.transcript_id
     assert transcript.speaker_transcript.startswith("[SPEAKER_00]")
+    assert transcript.text.startswith("[SPEAKER_00]")
     assert transcript.speaker_segments[0].speaker == "SPEAKER_00"
 
     minutes_response = client.post(

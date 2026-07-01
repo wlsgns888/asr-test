@@ -106,6 +106,7 @@ def apply_speaker_labels(
         line = f"[{speaker}] {transcript.text}"
         return transcript.model_copy(
             update={
+                "text": line,
                 "speaker_segments": [
                     speaker_turns[0].model_copy(update={"text": transcript.text})
                 ],
@@ -120,6 +121,7 @@ def apply_speaker_labels(
     lines = _format_speaker_transcript(aligned_segments)
     return transcript.model_copy(
         update={
+            "text": "\n".join(lines),
             "speaker_segments": aligned_segments,
             "speaker_transcript": "\n".join(lines),
         }

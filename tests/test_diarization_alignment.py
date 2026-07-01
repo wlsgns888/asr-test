@@ -30,6 +30,8 @@ def test_coarse_asr_segment_is_split_across_speaker_turns() -> None:
     # Then: the transcript keeps both speakers instead of collapsing to one.
     assert "[SPEAKER_00]" in labeled.speaker_transcript
     assert "[SPEAKER_01]" in labeled.speaker_transcript
+    assert "[SPEAKER_00]" in labeled.text
+    assert "[SPEAKER_01]" in labeled.text
     assert {segment.speaker for segment in labeled.speaker_segments} == {
         "SPEAKER_00",
         "SPEAKER_01",
