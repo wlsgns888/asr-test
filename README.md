@@ -6,6 +6,11 @@ OpenAI-compatible LLM API.
 
 ## Setup
 
+If you are asking an LLM coding agent to set up this repository, first point it
+to [`AGENT_SETUP.md`](AGENT_SETUP.md). That document is written as an
+agent-executable checklist with exact commands, expected outputs, and common
+failure diagnoses.
+
 ```bash
 git lfs install
 git lfs pull
