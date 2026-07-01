@@ -44,9 +44,9 @@ pre:focus-visible {
 }
 
 .app-shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(1680px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 28px 0 36px;
+  padding: 32px 0 40px;
 }
 
 .masthead {
@@ -59,8 +59,8 @@ pre:focus-visible {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(380px, min(34vw, 560px)) minmax(0, 1fr);
+  gap: 20px;
   align-items: stretch;
 }
 
@@ -71,7 +71,7 @@ h2 {
 }
 
 h1 {
-  font-size: clamp(2rem, 2.8rem, 3rem);
+  font-size: clamp(2rem, 3vw, 3rem);
   line-height: 1.08;
 }
 

@@ -4,8 +4,8 @@
 }
 
 .result-panel {
-  min-height: 580px;
   display: flex;
+  min-height: clamp(640px, calc(100vh - 186px), 920px);
   flex-direction: column;
 }
 
@@ -17,8 +17,8 @@
 .output-grid {
   display: grid;
   flex: 1;
-  grid-template-columns: minmax(260px, 0.8fr) minmax(340px, 1.2fr);
-  gap: 12px;
+  grid-template-columns: minmax(340px, 1fr) minmax(400px, 1.15fr);
+  gap: 14px;
 }
 
 .output-pane {
@@ -72,8 +72,8 @@
 #source-output,
 #result-output {
   flex: 1;
-  height: min(58vh, 640px);
-  max-height: 640px;
+  height: clamp(520px, calc(100vh - 430px), 760px);
+  max-height: 760px;
   min-height: 430px;
   margin: 0;
   overflow: auto;

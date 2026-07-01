@@ -68,6 +68,15 @@ def test_result_panes_expose_independent_actions_and_scroll_contract() -> None:
     assert "overflow: auto" in css
 
 
+def test_desktop_layout_scales_for_large_pc_viewports() -> None:
+    client = TestClient(create_app())
+
+    css = client.get("/static/base.css").text
+
+    assert "min(1680px, calc(100% - 48px))" in css
+    assert "minmax(380px, min(34vw, 560px))" in css
+
+
 def test_frontend_payload_helpers_send_new_backend_contract() -> None:
     node = shutil.which("node")
     if node is None:

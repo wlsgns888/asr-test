@@ -162,7 +162,7 @@ input[type="file"] {
 }
 
 textarea {
-  min-height: 132px;
+  min-height: clamp(132px, 15vh, 188px);
   resize: vertical;
   padding: 12px;
 }
