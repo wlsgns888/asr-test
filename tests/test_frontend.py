@@ -18,10 +18,17 @@ def test_root_serves_frontend_shell() -> None:
     assert "50분 음성" in response.text
     assert "화자 구분 사용" in response.text
     assert 'id="speaker-separation-enabled"' in response.text
-    assert "요약 프롬프트" in response.text
-    assert 'id="summary-prompt"' in response.text
-    assert "전문 회의록으로 요약하세요" in response.text
-    assert "액션아이템(담당자/기한이 언급된 경우 포함)" in response.text
+    assert "회의록 프롬프트" in response.text
+    assert 'id="minutes-prompt"' in response.text
+    assert 'id="save-prompt-button"' in response.text
+    assert 'id="load-prompt-button"' in response.text
+    assert "요약 프롬프트" not in response.text
+    assert "회의록 템플릿" not in response.text
+    assert 'id="summary-prompt"' not in response.text
+    assert 'id="template"' not in response.text
+    assert "아래 회의 메모를 바탕으로 공식 회의록을 작성해주세요" in response.text
+    assert "[회의 정보] - 회의명: (회의 제목)" in response.text
+    assert "액션 아이템 (담당자/업무내용/마감일 표 형식)" in response.text
     assert "처리 시간" in response.text
     assert 'id="copy-source-button"' in response.text
     assert 'id="download-source-button"' in response.text
@@ -96,8 +103,7 @@ def test_frontend_payload_helpers_send_new_backend_contract() -> None:
         ");",
         "const minutes = context.window.createMinutesPayload(",
         '  "transcript-456",',
-        '  "- 결정사항",',
-        '  "실행 중심으로 요약",',
+        '  "실행 중심으로 요약하고 - 결정사항 형식으로 작성",',
         ");",
         'if (conversion.upload_id !== "upload-123") {',
         "  throw new Error(`unexpected upload id: ${conversion.upload_id}`);",
@@ -108,11 +114,11 @@ def test_frontend_payload_helpers_send_new_backend_contract() -> None:
         'if (minutes.transcript_id !== "transcript-456") {',
         "  throw new Error(`unexpected transcript id: ${minutes.transcript_id}`);",
         "}",
-        'if (minutes.template !== "- 결정사항") {',
-        "  throw new Error(`unexpected template: ${minutes.template}`);",
+        'if (minutes.prompt !== "실행 중심으로 요약하고 - 결정사항 형식으로 작성") {',
+        "  throw new Error(`unexpected prompt: ${minutes.prompt}`);",
         "}",
-        'if (minutes.summary_prompt !== "실행 중심으로 요약") {',
-        "  throw new Error(`unexpected summary prompt: ${minutes.summary_prompt}`);",
+        'if ("template" in minutes || "summary_prompt" in minutes) {',
+        '  throw new Error("legacy prompt fields should not be sent");',
         "}",
     ]
     completed = subprocess.run(  # noqa: S603

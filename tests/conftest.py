@@ -32,6 +32,8 @@ def settings(tmp_path: Path) -> Settings:
         wav_dir=tmp_path / "wav",
         transcript_dir=tmp_path / "transcripts",
         minutes_dir=tmp_path / "minutes",
+        result_dir=tmp_path / "result",
+        prompt_dir=tmp_path / "prompts",
     )
 
 

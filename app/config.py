@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     wav_dir: Path = Path("./data/wav")
     transcript_dir: Path = Path("./data/transcripts")
     minutes_dir: Path = Path("./data/minutes")
+    result_dir: Path = Path("./result")
+    prompt_dir: Path = Path("./prompts")
 
     @model_validator(mode="after")
     def reject_fake_adapters_outside_testing(self) -> "Settings":
@@ -112,6 +114,8 @@ class Settings(BaseSettings):
             self.wav_dir,
             self.transcript_dir,
             self.minutes_dir,
+            self.result_dir,
+            self.prompt_dir,
         ):
             directory.mkdir(parents=True, exist_ok=True)
 

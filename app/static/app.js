@@ -1,8 +1,10 @@
 const form = document.querySelector("#minutes-form");
 const fileInput = document.querySelector("#audio-file");
 const speakerToggle = document.querySelector("#speaker-separation-enabled");
-const summaryPromptInput = document.querySelector("#summary-prompt");
-const templateInput = document.querySelector("#template");
+const minutesPromptInput = document.querySelector("#minutes-prompt");
+const savePromptButton = document.querySelector("#save-prompt-button");
+const loadPromptButton = document.querySelector("#load-prompt-button");
+const promptState = document.querySelector("#prompt-state");
 const runButton = document.querySelector("#run-button");
 const runState = document.querySelector("#run-state");
 const timingBreakdown = document.querySelector("#timing-breakdown");
@@ -77,6 +79,32 @@ async function loadCapabilities() {
   }
 }
 
+function setPromptState(message, state = "idle") {
+  promptState.textContent = message;
+  promptState.dataset.state = state;
+}
+
+async function loadMinutesPrompt() {
+  const data = await requestJson("/prompts/minutes");
+  minutesPromptInput.value = data.prompt;
+  setPromptState(data.source === "saved" ? "저장된 프롬프트" : "기본 프롬프트");
+}
+
+async function saveMinutesPrompt() {
+  const prompt = minutesPromptInput.value.trim();
+  if (!prompt) {
+    setPromptState("프롬프트를 입력해 주세요.", "error");
+    return;
+  }
+  const data = await requestJson("/prompts/minutes", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt }),
+  });
+  minutesPromptInput.value = data.prompt;
+  setPromptState("프롬프트 저장 완료", "success");
+}
+
 async function uploadAudio(file) {
   return new Promise((resolve, reject) => {
     const payload = new FormData();
@@ -137,13 +165,11 @@ function delay(milliseconds) {
   });
 }
 
-async function createMinutes(transcriptId, template, summaryPrompt) {
+async function createMinutes(transcriptId, prompt) {
   return requestJson("/minutes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(
-      window.createMinutesPayload(transcriptId, template, summaryPrompt),
-    ),
+    body: JSON.stringify(window.createMinutesPayload(transcriptId, prompt)),
   });
 }
 
@@ -186,11 +212,7 @@ form.addEventListener("submit", async (event) => {
     setStep("minutes", ["upload", "transcript"]);
     progress.startTimed("회의록 생성 중", "변환된 내용을 Markdown 회의록으로 정리합니다.");
 
-    const minutes = await createMinutes(
-      transcript.transcript_id,
-      templateInput.value,
-      summaryPromptInput.value,
-    );
+    const minutes = await createMinutes(transcript.transcript_id, minutesPromptInput.value);
     progress.addLog("회의록 생성 완료");
     setBusy(true, "결과 저장 중");
     setStep("result", ["upload", "transcript", "minutes"]);
@@ -212,3 +234,18 @@ form.addEventListener("submit", async (event) => {
 
 progress.reset();
 loadCapabilities();
+loadMinutesPrompt().catch((error) => {
+  setPromptState(error.message, "error");
+});
+loadPromptButton.addEventListener("click", () => {
+  setPromptState("프롬프트 불러오는 중");
+  loadMinutesPrompt().catch((error) => {
+    setPromptState(error.message, "error");
+  });
+});
+savePromptButton.addEventListener("click", () => {
+  setPromptState("프롬프트 저장 중");
+  saveMinutesPrompt().catch((error) => {
+    setPromptState(error.message, "error");
+  });
+});

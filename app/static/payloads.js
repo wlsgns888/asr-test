@@ -10,16 +10,14 @@ window.createConversionJobPayload = function createConversionJobPayload(
 
 window.createMinutesPayload = function createMinutesPayload(
   transcriptId,
-  template,
-  summaryPrompt,
+  minutesPrompt,
 ) {
   const payload = {
-    template,
     transcript_id: transcriptId,
   };
-  const prompt = summaryPrompt.trim();
+  const prompt = minutesPrompt.trim();
   if (prompt) {
-    payload.summary_prompt = prompt;
+    payload.prompt = prompt;
   }
   return payload;
 };

@@ -2,7 +2,13 @@ from fastapi import APIRouter, HTTPException, status
 from starlette.concurrency import run_in_threadpool
 
 from app.main_dependencies import MinutesDep, StorageDep
-from app.schemas import MinutesCreateRequest, MinutesResult, MinutesSummary
+from app.schemas import (
+    MinutesCreateRequest,
+    MinutesPrompt,
+    MinutesPromptUpdateRequest,
+    MinutesResult,
+    MinutesSummary,
+)
 from app.services.llm_service import LLMConfigurationError
 from app.services.storage_service import ArtifactNotFoundError, InvalidArtifactIdError
 
@@ -21,8 +27,7 @@ async def create_minutes(
         summary = await run_in_threadpool(
             minutes.create_minutes,
             payload.transcript_id,
-            payload.template,
-            payload.summary_prompt,
+            payload.prompt,
         )
     except ArtifactNotFoundError as error:
         raise HTTPException(
@@ -40,6 +45,19 @@ async def create_minutes(
             detail="LLM is not configured",
         ) from error
     return summary
+
+
+@router.get("/prompts/minutes")
+async def get_minutes_prompt(storage: StorageDep) -> MinutesPrompt:
+    return await run_in_threadpool(storage.load_minutes_prompt)
+
+
+@router.put("/prompts/minutes")
+async def save_minutes_prompt(
+    payload: MinutesPromptUpdateRequest,
+    storage: StorageDep,
+) -> MinutesPrompt:
+    return await run_in_threadpool(storage.save_minutes_prompt, payload.prompt)
 
 
 @router.get("/results/{minutes_id}")

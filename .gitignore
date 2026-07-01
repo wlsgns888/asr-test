@@ -1,5 +1,7 @@
 .env
 zai_api.md
+.DS_Store
+artifacts/
 .venv/
 __pycache__/
 .pytest_cache/
@@ -15,4 +17,6 @@ data/wav/
 data/transcripts/
 data/minutes/
 data/
+result/
+prompts/
 *.pyc

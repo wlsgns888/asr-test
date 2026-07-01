@@ -23,11 +23,10 @@ class LLMService:
     def generate_minutes(
         self,
         transcript: str,
-        template: str,
-        summary_prompt: str,
+        prompt: str,
     ) -> str:
         if self.settings.llm_provider is LLMProvider.FAKE:
-            return self._generate_fake_minutes(transcript, template, summary_prompt)
+            return self._generate_fake_minutes(transcript, prompt)
         if self.settings.llm_api_key.get_secret_value() == "":
             raise LLMConfigurationError
         client = OpenAI(
@@ -36,7 +35,7 @@ class LLMService:
         )
         response = client.chat.completions.create(
             model=self.settings.llm_model,
-            messages=self.build_messages(transcript, template, summary_prompt),
+            messages=self.build_messages(transcript, prompt),
         )
         content = response.choices[0].message.content
         if content is None:
@@ -46,8 +45,7 @@ class LLMService:
     def _generate_fake_minutes(
         self,
         transcript: str,
-        template: str,
-        summary_prompt: str,
+        prompt: str,
     ) -> str:
         return (
             "# 회의록\n\n"
@@ -55,8 +53,8 @@ class LLMService:
             f"- 변환 원본 요약: {transcript}\n\n"
             "## 고정 지침\n"
             f"{FIXED_MINUTES_SAFETY_PROMPT}\n\n"
-            "## 요약 지침\n"
-            f"{summary_prompt}\n\n"
+            "## 회의록 프롬프트\n"
+            f"{prompt}\n\n"
             "## 주요 논의사항\n"
             "- 확인 필요\n\n"
             "## 결정사항\n"
@@ -64,21 +62,16 @@ class LLMService:
             "## 액션아이템\n"
             "- 확인 필요\n\n"
             "## 후속 확인사항\n"
-            f"- 적용 템플릿:\n{template}\n"
+            "- 확인 필요\n"
         )
 
-    def _prompt(self, transcript: str, template: str, summary_prompt: str) -> str:
-        return (
-            f"[요약 지침]\n{summary_prompt}\n\n"
-            f"[출력 형식]\n{template}\n\n"
-            f"[음성 변환 원본]\n{transcript}"
-        )
+    def _prompt(self, transcript: str, prompt: str) -> str:
+        return f"[회의록 프롬프트]\n{prompt}\n\n[음성 변환 원본]\n{transcript}"
 
     def build_messages(
         self,
         transcript: str,
-        template: str,
-        summary_prompt: str,
+        prompt: str,
     ) -> list[ChatCompletionMessageParam]:
         return [
             {
@@ -89,6 +82,6 @@ class LLMService:
             },
             {
                 "role": "user",
-                "content": self._prompt(transcript, template, summary_prompt),
+                "content": self._prompt(transcript, prompt),
             },
         ]

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -7,10 +8,18 @@ from fastapi import UploadFile
 
 from app.artifact_id import InvalidArtifactIdError, ensure_artifact_id
 from app.config import Settings
-from app.schemas.minutes import MinutesArtifact, MinutesResult, MinutesSummary
+from app.schemas.minutes import (
+    DEFAULT_MINUTES_PROMPT,
+    MINUTES_PROMPT_FILENAME,
+    MinutesArtifact,
+    MinutesPrompt,
+    MinutesResult,
+    MinutesSummary,
+)
 from app.schemas.transcript import TranscriptDocument, TranscriptSummary, UploadSummary
 
 SUPPORTED_AUDIO_EXTENSIONS = frozenset({".mp3", ".m4a", ".wav"})
+RESULT_TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
 
 
 class UnsupportedAudioError(RuntimeError):
@@ -76,6 +85,7 @@ class StorageService:
         self,
         transcript_id: str,
         markdown: str,
+        source_text: str,
     ) -> MinutesSummary:
         self.settings.ensure_directories()
         minutes_id = uuid4().hex
@@ -91,12 +101,19 @@ class StorageService:
         _ = json_path.write_bytes(
             orjson.dumps(artifact.model_dump(), option=orjson.OPT_INDENT_2),
         )
+        self._export_result(source_text, markdown)
         return MinutesSummary(
             minutes_id=minutes_id,
             transcript_id=transcript_id,
             markdown_path=markdown_path,
             json_path=json_path,
         )
+
+    def _export_result(self, source_text: str, markdown: str) -> None:
+        result_path = next_available_result_path(self.settings.result_dir)
+        result_path.mkdir(parents=True)
+        _ = (result_path / "source.txt").write_text(source_text, encoding="utf-8")
+        _ = (result_path / "minutes.md").write_text(markdown, encoding="utf-8")
 
     def load_minutes(self, minutes_id: str) -> MinutesResult:
         safe_minutes_id = ensure_artifact_id(minutes_id)
@@ -123,6 +140,18 @@ class StorageService:
             json=artifact_json,
         )
 
+    def load_minutes_prompt(self) -> MinutesPrompt:
+        path = self.settings.prompt_dir / MINUTES_PROMPT_FILENAME
+        if not path.exists():
+            return MinutesPrompt(prompt=DEFAULT_MINUTES_PROMPT, source="default")
+        return MinutesPrompt(prompt=path.read_text(encoding="utf-8"), source="saved")
+
+    def save_minutes_prompt(self, prompt: str) -> MinutesPrompt:
+        self.settings.ensure_directories()
+        path = self.settings.prompt_dir / MINUTES_PROMPT_FILENAME
+        _ = path.write_text(prompt, encoding="utf-8")
+        return MinutesPrompt(prompt=prompt, source="saved")
+
 
 __all__ = [
     "ArtifactNotFoundError",
@@ -130,3 +159,20 @@ __all__ = [
     "StorageService",
     "UnsupportedAudioError",
 ]
+
+
+def result_timestamp() -> str:
+    return datetime.now(UTC).astimezone().strftime(RESULT_TIMESTAMP_FORMAT)
+
+
+def next_available_result_path(result_dir: Path) -> Path:
+    base_name = result_timestamp()
+    candidate = result_dir / base_name
+    if not candidate.exists():
+        return candidate
+    suffix = 2
+    while True:
+        candidate = result_dir / f"{base_name}-{suffix}"
+        if not candidate.exists():
+            return candidate
+        suffix += 1

@@ -281,5 +281,5 @@ cleaner transcript timestamp reconciliation.
 
 A browser UI is served from `/` by the FastAPI app. It supports audio upload,
 transcription, speaker-labeled source display when configured, minutes
-generation, result lookup, and Markdown download. docx/PDF export, login, and
-template management UI remain out of scope.
+generation with a saved local minutes prompt, result lookup, and Markdown
+download. docx/PDF export and login remain out of scope.

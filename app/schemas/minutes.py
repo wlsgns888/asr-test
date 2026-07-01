@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar, Final
+from typing import ClassVar, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_core import PydanticCustomError
@@ -10,24 +10,30 @@ from app.artifact_id import (
     ensure_artifact_id,
 )
 
-DEFAULT_SUMMARY_PROMPT: Final = (
-    "회의 내용을 경영진과 실무자가 바로 활용할 수 있는 전문 회의록으로 "
-    "요약하세요.\n"
-    "핵심 논의, 결정사항, 액션아이템(담당자/기한이 언급된 경우 포함), "
-    "리스크/이슈, 후속 확인사항을 명확히 구분하세요.\n"
-    "발언의 뉘앙스를 유지하되 중복 표현은 정리하고, 근거가 불명확한 "
-    '내용은 "확인 필요"로 표시하세요.'
+DEFAULT_MINUTES_PROMPT: Final = (
+    "아래 회의 메모를 바탕으로 공식 회의록을 작성해주세요.\n\n"
+    "[회의 정보] - 회의명: (회의 제목)\n"
+    "- 일시: (날짜, 시간)\n"
+    "- 참석자: (이름 나열)\n\n"
+    "[회의 메모]\n"
+    "(여기에 음성 변환 원본을 회의 메모로 보고 정리하기)\n\n"
+    "[작성 형식]\n"
+    "1. 회의 개요 (2-3줄 요약)\n"
+    "2. 주요 논의사항 (항목별 정리)\n"
+    "3. 결정사항 (번호 매겨서)\n"
+    "4. 액션 아이템 (담당자/업무내용/마감일 표 형식)\n\n"
+    "정보가 명확하지 않은 회의명, 일시, 참석자는 '확인 필요'로 표시하세요."
 )
+MINUTES_PROMPT_FILENAME: Final = "minutes_prompt.md"
+BLANK_MINUTES_PROMPT_ERROR_CODE: Final = "blank_minutes_prompt"
+BLANK_MINUTES_PROMPT_ERROR_MESSAGE: Final = "minutes prompt must not be blank"
 
 
 class MinutesCreateRequest(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     transcript_id: str
-    summary_prompt: str = DEFAULT_SUMMARY_PROMPT
-    template: str = (
-        "- 회의 개요\n- 주요 논의사항\n- 결정사항\n- 액션아이템\n- 후속 확인사항"
-    )
+    prompt: str = DEFAULT_MINUTES_PROMPT
 
     @field_validator("transcript_id")
     @classmethod
@@ -40,12 +46,36 @@ class MinutesCreateRequest(BaseModel):
                 ARTIFACT_ID_ERROR_MESSAGE,
             ) from error
 
-    @field_validator("summary_prompt")
+    @field_validator("prompt")
     @classmethod
-    def default_blank_summary_prompt(cls, value: str) -> str:
+    def default_blank_prompt(cls, value: str) -> str:
         normalized = value.strip()
         if normalized == "":
-            return DEFAULT_SUMMARY_PROMPT
+            return DEFAULT_MINUTES_PROMPT
+        return normalized
+
+
+class MinutesPrompt(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    prompt: str
+    source: Literal["default", "saved"]
+
+
+class MinutesPromptUpdateRequest(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    prompt: str
+
+    @field_validator("prompt")
+    @classmethod
+    def reject_blank_prompt(cls, value: str) -> str:
+        normalized = value.strip()
+        if normalized == "":
+            raise PydanticCustomError(
+                BLANK_MINUTES_PROMPT_ERROR_CODE,
+                BLANK_MINUTES_PROMPT_ERROR_MESSAGE,
+            )
         return normalized
 
 

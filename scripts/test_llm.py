@@ -18,14 +18,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from app.config import AppEnv, LLMProvider, Settings
-from app.schemas.minutes import DEFAULT_SUMMARY_PROMPT
+from app.schemas.minutes import DEFAULT_MINUTES_PROMPT
 from app.services.llm_service import LLMService
 
 EXPECTED_ARG_COUNT = 2
 USAGE_ERROR = 2
-DEFAULT_TEMPLATE = (
-    "- 회의 개요\n- 주요 논의사항\n- 결정사항\n- 액션아이템\n- 후속 확인사항"
-)
 
 
 def main() -> int:
@@ -38,8 +35,7 @@ def main() -> int:
     )
     markdown = service.generate_minutes(
         transcript=sys.argv[1],
-        template=DEFAULT_TEMPLATE,
-        summary_prompt=DEFAULT_SUMMARY_PROMPT,
+        prompt=DEFAULT_MINUTES_PROMPT,
     )
     print(markdown)
     return 0

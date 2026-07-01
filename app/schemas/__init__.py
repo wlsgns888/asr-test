@@ -10,6 +10,8 @@ from app.schemas.conversion_job import (
 from app.schemas.minutes import (
     MinutesArtifact,
     MinutesCreateRequest,
+    MinutesPrompt,
+    MinutesPromptUpdateRequest,
     MinutesResult,
     MinutesSummary,
 )
@@ -32,6 +34,8 @@ __all__ = [
     "ConversionJobTiming",
     "MinutesArtifact",
     "MinutesCreateRequest",
+    "MinutesPrompt",
+    "MinutesPromptUpdateRequest",
     "MinutesResult",
     "MinutesSummary",
     "SpeakerSegment",
