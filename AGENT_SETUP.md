@@ -107,6 +107,7 @@ ALIGNMENT_MODEL=models/Qwen3-ForcedAligner-0.6B-8bit
 DIARIZATION_ENGINE=pyannote
 DIARIZATION_MODEL=models/pyannote-speaker-diarization-community-1
 DIARIZATION_HF_TOKEN=
+DIARIZATION_DEVICE=auto
 ```
 
 Configure one LLM provider.
@@ -146,6 +147,10 @@ Expected:
 - exit code `0`,
 - JSON array output,
 - entries with `SPEAKER_00` or `SPEAKER_01`.
+
+`DIARIZATION_DEVICE=auto` uses CUDA when available, then Apple Silicon MPS, and
+falls back to CPU. If accelerator execution fails in a specific environment, set
+`DIARIZATION_DEVICE=cpu`, restart the app, and rerun the direct worker test.
 
 Common failures:
 

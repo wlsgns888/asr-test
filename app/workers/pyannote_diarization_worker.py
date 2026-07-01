@@ -18,6 +18,7 @@ MISSING_DEPENDENCY_MESSAGE = (
     f"{MISSING_DEPENDENCY_ACTION} "
     f"{MISSING_DEPENDENCY_TARGET}"
 )
+DIARIZATION_DEVICE_ENV = "DIARIZATION_DEVICE"
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +50,11 @@ def diarize(audio: Path, model: str) -> list[SpeakerSegment]:
     if pipeline is None:
         message = "pyannote pipeline could not be loaded"
         raise WorkerConfigurationError(message)
+    device_name = select_diarization_device_name()
+    if device_name is not None:
+        import torch
+
+        _ = pipeline.to(torch.device(device_name))
     output = pipeline(str(audio))
     annotation = getattr(output, "speaker_diarization", output)
     return [
@@ -68,6 +74,25 @@ def _iter_speaker_turns(annotation: Any) -> list[tuple[Any, str]]:
             for turn, _, speaker in annotation.itertracks(yield_label=True)
         ]
     return [(turn, str(speaker)) for turn, speaker in annotation]
+
+
+def select_diarization_device_name() -> str | None:
+    import torch
+
+    requested_device = os.environ.get(DIARIZATION_DEVICE_ENV, "auto").strip().lower()
+    if requested_device in ("", "auto"):
+        if torch.cuda.is_available():
+            return "cuda"
+        mps_backend = getattr(torch.backends, "mps", None)
+        if mps_backend is not None and mps_backend.is_available():
+            return "mps"
+        return None
+    if requested_device == "cpu":
+        return None
+    if requested_device in ("cuda", "mps"):
+        return requested_device
+    message = f"{DIARIZATION_DEVICE_ENV} must be one of auto, cpu, cuda, or mps"
+    raise WorkerConfigurationError(message)
 
 
 def main() -> None:

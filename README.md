@@ -217,6 +217,7 @@ Configure real diarization with the bundled local model:
 DIARIZATION_ENGINE=pyannote
 DIARIZATION_MODEL=models/pyannote-speaker-diarization-community-1
 DIARIZATION_HF_TOKEN=
+DIARIZATION_DEVICE=auto
 ```
 
 The model files are committed to this repository with Git LFS. With the local
@@ -226,6 +227,11 @@ The model files are committed to this repository with Git LFS. With the local
 ```bash
 uv sync --extra diarization
 ```
+
+`DIARIZATION_DEVICE=auto` uses CUDA when available, then Apple Silicon MPS, and
+falls back to CPU. On an Apple Silicon Mac this is much faster than CPU-only
+diarization. Set `DIARIZATION_DEVICE=cpu` only when accelerator execution causes
+environment-specific PyTorch issues.
 
 If you replace `DIARIZATION_MODEL` with a remote Hugging Face id such as
 `pyannote/speaker-diarization-community-1`, then you must accept the model terms
